@@ -190,14 +190,14 @@
         <div class="column">
             <div class="laps-section">
                 <h3>集中記録</h3>
-                <div id="totalFocusTime" class="total-time">累計集中時間: 00:00:00</div>
+                <div id="totalFocusTime" class="total-time">トータル集中時間: 00:00:00</div>
                 <ul id="focusLapsList" class="laps-list"></ul>
             </div>
         </div>
         <div class="column">
             <div class="laps-section">
                 <h3>休憩記録</h3>
-                <div id="totalBreakTime" class="total-time">累計休憩時間: 00:00:00</div>
+                <div id="totalBreakTime" class="total-time">トータル休憩時間: 00:00:00</div>
                 <ul id="breakLapsList" class="laps-list"></ul>
             </div>
         </div>
@@ -289,8 +289,8 @@
     }
 
     function updateTotalTimeDisplay() {
-        totalFocusTimeDisplay.textContent = `累計集中時間: ${formatTime(totalFocusSeconds)}`;
-        totalBreakTimeDisplay.textContent = `累計休憩時間: ${formatTime(totalBreakSeconds)}`;
+        totalFocusTimeDisplay.textContent = `トータル集中時間: ${formatTime(totalFocusSeconds)}`;
+        totalBreakTimeDisplay.textContent = `トータル休憩時間: ${formatTime(totalBreakSeconds)}`;
     }
 
     function startMainTimerInterval() {
