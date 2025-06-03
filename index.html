@@ -10,7 +10,9 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        /* justify-content: center; /* コンテンツが増えるので少し上から開始 */
+        padding-top: 20px; /* 上部パディング */
+        padding-bottom: 20px; /* 下部パディング */
         min-height: 100vh;
         margin: 0;
         background-color: #f0f0f0;
@@ -32,6 +34,7 @@
         text-align: center;
         width: 90%;
         max-width: 500px;
+        margin-bottom: 30px; /* 使い方説明との間隔 */
     }
 
     #modeIndicator {
@@ -42,7 +45,7 @@
     }
 
     #timerDisplay {
-        font-size: 4rem; /* メインタイマーはHH:MM:SSのまま */
+        font-size: 4rem;
         font-weight: bold;
         margin-bottom: 20px;
         color: #2c3e50;
@@ -117,7 +120,7 @@
     .total-time {
         margin-bottom: 10px;
         font-weight: bold;
-        font-size: 1.0rem; /* 少し小さくしてバランス調整 */
+        font-size: 1.0rem;
     }
 
     .laps-list {
@@ -139,18 +142,18 @@
     .laps-list li:last-child {
         border-bottom: none;
     }
-    .lap-duration { /* (HH:MM～HH:MM) のスタイル */
+    .lap-duration {
         display: block;
         font-size: 0.8em;
         color: #555;
-        margin-left: 25px; /* X回目のインデントに合わせる */
+        margin-left: 25px;
     }
     .lap-task {
         display: block;
         font-size: 0.9em;
         color: #333;
         margin-top: 3px;
-        margin-left: 25px; /* X回目のインデントに合わせる */
+        margin-left: 25px;
         white-space: pre-wrap;
         word-break: break-all;
     }
@@ -164,7 +167,42 @@
         flex: 1;
     }
 
+    .usage-guide {
+        width: 90%;
+        max-width: 500px;
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        text-align: left;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        color: #555;
+    }
+    .usage-guide h4 {
+        margin-top: 0;
+        color: #333;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+        margin-bottom: 10px;
+    }
+    .usage-guide ul {
+        padding-left: 20px;
+        margin-top: 0;
+    }
+    .usage-guide li {
+        margin-bottom: 8px;
+    }
+
     @media (max-width: 600px) {
+        body {
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+        .timer-container {
+            margin-bottom: 20px;
+            padding: 20px;
+        }
         #modeIndicator {
             font-size: 1.5rem;
         }
@@ -182,6 +220,13 @@
         }
         .total-time {
             font-size: 0.9rem;
+        }
+        .usage-guide {
+            font-size: 0.85rem;
+            padding: 15px;
+        }
+        .usage-guide ul {
+            padding-left: 15px;
         }
     }
 </style>
@@ -214,6 +259,19 @@
     <button id="resetButton">リセット</button>
 </div>
 
+<div class="usage-guide">
+    <h4>タイマーの使い方</h4>
+    <ul>
+        <li><strong>集中開始:</strong> 上のテキストエリアに集中する内容（例: 「ブログを書く」「資料作成」など、任意）を入力し、「集中スタート！」ボタンを押すと、集中時間の計測が始まります。入力した内容は、後で集中記録に表示されます。</li>
+        <li><strong>休憩開始:</strong> 集中作業が終わった時や、一旦休憩する時は「休憩する」ボタンを押します。その時点までの集中時間が記録され、休憩時間の計測が自動的に始まります。</li>
+        <li><strong>集中再開:</strong> 休憩を終えるときは「集中スタート！」ボタンを押します。休憩時間が記録され、再度集中時間の計測が始まります。</li>
+        <li><strong>記録の確認:</strong> 「集中記録」「休憩記録」に各セッションの時間と、集中時には入力した内容、それぞれの開始・終了時刻が表示されます。</li>
+        <li><strong>トータル時間:</strong> 各記録の上には、集中時間と休憩時間それぞれのトータル時間が表示されます。</li>
+        <li><strong>リセット:</strong> 「リセット」ボタンを押すと、全てのタイマー、記録、入力内容が初期状態に戻ります。</li>
+        <li><strong>注意点:</strong> このタイマーの記録は、お使いのブラウザ上に一時的に保存されるものです。ブラウザを閉じたり、ページを更新したりすると記録は消えてしまいますのでご注意ください。</li>
+    </ul>
+</div>
+
 <script>
     const bodyElement = document.body;
     const modeIndicator = document.getElementById('modeIndicator');
@@ -239,7 +297,6 @@
     let currentSessionStartTime = null;
     let currentTaskDescription = "";
 
-    // formatType: 'timer' (HH:MM:SS), 'japanese' (HH時間MM分SS秒)
     function formatTime(totalSeconds, formatType = 'timer') {
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -247,7 +304,7 @@
 
         if (formatType === 'japanese') {
             return String(hours).padStart(2, '0') + '時間' + String(minutes).padStart(2, '0') + '分' + String(seconds).padStart(2, '0') + '秒';
-        } else { // default to 'timer'
+        } else {
             return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
         }
     }
@@ -260,7 +317,7 @@
     }
 
     function updateTimerDisplay() {
-        timerDisplay.textContent = formatTime(currentSeconds); // メインタイマーはHH:MM:SS形式
+        timerDisplay.textContent = formatTime(currentSeconds);
     }
 
     function updateModeIndicatorAndBackground() {
@@ -287,7 +344,7 @@
     function addLapTime(mode, timeInSeconds, sessionStartTime, sessionEndTime, taskDesc) {
         const lapItem = document.createElement('li');
         let lapNumber;
-        const formattedDuration = formatTime(timeInSeconds, 'japanese'); // 日本語形式で時間を取得
+        const formattedDuration = formatTime(timeInSeconds, 'japanese');
         const formattedStartTime = formatHoursMinutes(sessionStartTime);
         const formattedEndTime = formatHoursMinutes(sessionEndTime);
         const timeRange = (formattedStartTime && formattedEndTime) ? '(' + formattedStartTime + '～' + formattedEndTime + ')' : '';
@@ -307,7 +364,7 @@
             lapNumber = focusLapCounter;
             lapItem.innerHTML = focusLapCounter + '回目 ' + formattedDuration + ' <span class="lap-duration">' + timeRange + '</span>' + taskHtml;
             focusLapsList.prepend(lapItem);
-        } else { // mode === 'break'
+        } else {
             breakLapCounter++;
             lapNumber = breakLapCounter;
             lapItem.innerHTML = breakLapCounter + '回目 ' + formattedDuration + ' <span class="lap-duration">' + timeRange + '</span>';
