@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>集中タイマー</title>
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        background-color: #f0f0f0; /* デフォルト背景色 */
+        color: #333;
+        transition: background-color 0.5s ease; /* 背景色変更を滑らかに */
+    }
+    /* モードに応じたBody背景色クラス */
+    body.focus-mode-bg {
+        background-color: #d4e6f1; /* 集中モード時の薄い青 (変更前: #eaf2f8) */
+    }
+    body.break-mode-bg {
+        background-color: #d5f5e3; /* 休憩モード時の薄い緑 (変更前: #e8f8f5) */
+    }
+
+
+    .timer-container {
+        background-color: #fff;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        width: 90%;
+        max-width: 500px;
+    }
+
+    #modeIndicator {
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #444;
+    }
+
+    #timerDisplay {
+        font-size: 4rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #2c3e50;
+        background-color: #ecf0f1;
+        padding: 15px;
+        border-radius: 5px;
+    }
+
+    #controlButton, #pauseButton, #resetButton {
+        font-size: 1.5rem;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    #controlButton:last-child, #pauseButton:last-child, #resetButton:last-child {
+        margin-bottom: 0;
+    }
+
+
+    #controlButton.focus {
+        background-color: #3498db;
+        color: white;
+    }
+    #controlButton.focus:hover {
+        background-color: #2980b9;
+    }
+
+    #controlButton.break {
+        background-color: #2ecc71;
+        color: white;
+    }
+    #controlButton.break:hover {
+        background-color: #27ae60;
+    }
+
+    #pauseButton {
+        background-color: #f39c12;
+        color: white;
+    }
+    #pauseButton:hover:not(:disabled) {
+        background-color: #e67e22;
+    }
+    #pauseButton:disabled {
+        background-color: #bdc3c7;
+        color: #7f8c8d;
+        cursor: not-allowed;
+    }
+
+    #resetButton {
+        background-color: #e74c3c;
+        color: white;
+        margin-top: 20px;
+    }
+    #resetButton:hover {
+        background-color: #c0392b;
+    }
+
+
+    .laps-section {
+        margin-top: 20px;
+        text-align: left;
+        width: 100%;
+    }
+
+    .laps-section h3 {
+        margin-bottom: 5px;
+        color: #7f8c8d;
+        border-bottom: 1px solid #bdc3c7;
+        padding-bottom: 5px;
+    }
+
+    .total-time {
+        margin-bottom: 10px;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+
+    .laps-list {
+        list-style-type: none;
+        padding: 0;
+        max-height: 150px;
+        overflow-y: auto;
+        background-color: #f9f9f9;
+        border: 1px solid #eee;
+        border-radius: 3px;
+    }
+
+    .laps-list li {
+        padding: 8px 10px;
+        border-bottom: 1px solid #eee;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+    .laps-list li:last-child {
+        border-bottom: none;
+    }
+    .lap-duration {
+        display: block;
+        margin-left: 20px;
+        font-size: 0.8em;
+        color: #555;
+    }
+
+
+    .columns {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+    }
+    .column {
+        flex: 1;
+    }
+
+    @media (max-width: 600px) {
+        #modeIndicator {
+            font-size: 1.5rem;
+        }
+        #timerDisplay {
+            font-size: 3rem;
+        }
+        #controlButton, #pauseButton, #resetButton {
+            font-size: 1.2rem;
+        }
+        .columns {
+            flex-direction: column;
+        }
+    }
+</style>
+</head>
+<body>
+
+<div class="timer-container">
+    <div id="modeIndicator">---</div>
+    <div id="timerDisplay">00:00:00</div>
+    <button id="controlButton" class="focus">集中</button>
+    <button id="pauseButton">一時停止</button>
+
+    <div class="columns">
+        <div class="column">
+            <div class="laps-section">
+                <h3>集中記録</h3>
+                <div id="totalFocusTime" class="total-time">累計集中時間: 00:00:00</div>
+                <ul id="focusLapsList" class="laps-list"></ul>
+            </div>
+        </div>
+        <div class="column">
+            <div class="laps-section">
+                <h3>休憩記録</h3>
+                <div id="totalBreakTime" class="total-time">累計休憩時間: 00:00:00</div>
+                <ul id="breakLapsList" class="laps-list"></ul>
+            </div>
+        </div>
+    </div>
+
+    <button id="resetButton">リセット</button>
+</div>
+
+<script>
+    const bodyElement = document.body;
+    const modeIndicator = document.getElementById('modeIndicator');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const controlButton = document.getElementById('controlButton');
+    const pauseButton = document.getElementById('pauseButton');
+    const resetButton = document.getElementById('resetButton');
+    const focusLapsList = document.getElementById('focusLapsList');
+    const totalFocusTimeDisplay = document.getElementById('totalFocusTime');
+    const breakLapsList = document.getElementById('breakLapsList');
+    const totalBreakTimeDisplay = document.getElementById('totalBreakTime');
+
+    let timerInterval = null;
+    let currentSeconds = 0;
+    let currentMode = 'focus';
+    let isTimerActive = false;
+    let isPaused = false;
+
+    let totalFocusSeconds = 0;
+    let totalBreakSeconds = 0;
+    let focusLapCounter = 0;
+    let breakLapCounter = 0;
+
+    let currentSessionStartTime = null;
+
+    function formatTime(totalSeconds) {
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function formatHoursMinutes(dateObject) {
+        if (!dateObject) return '';
+        const hours = String(dateObject.getHours()).padStart(2, '0');
+        const minutes = String(dateObject.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+    }
+
+    function updateTimerDisplay() {
+        timerDisplay.textContent = formatTime(currentSeconds);
+    }
+
+    function updateModeIndicatorAndBackground() {
+        if (!isTimerActive && !isPaused) {
+             modeIndicator.textContent = '---';
+             bodyElement.classList.remove('focus-mode-bg', 'break-mode-bg');
+        } else if (currentMode === 'focus') {
+            modeIndicator.textContent = '集中モード';
+            bodyElement.classList.add('focus-mode-bg');
+            bodyElement.classList.remove('break-mode-bg');
+        } else { // currentMode === 'break'
+            modeIndicator.textContent = '休憩モード';
+            bodyElement.classList.add('break-mode-bg');
+            bodyElement.classList.remove('focus-mode-bg');
+        }
+         if (isPaused && isTimerActive) {
+            modeIndicator.textContent += ' (一時停止中)';
+        }
+    }
+
+
+    function addLapTime(mode, timeInSeconds, sessionStartTime, sessionEndTime) {
+        const lapItem = document.createElement('li');
+        let lapNumber;
+        const formattedStartTime = formatHoursMinutes(sessionStartTime);
+        const formattedEndTime = formatHoursMinutes(sessionEndTime);
+        const timeRange = (formattedStartTime && formattedEndTime) ? `(${formattedStartTime}～${formattedEndTime})` : '';
+
+        if (mode === 'focus') {
+            focusLapCounter++;
+            lapNumber = focusLapCounter;
+            lapItem.innerHTML = `No.${lapNumber}: ${formatTime(timeInSeconds)} <span class="lap-duration">${timeRange}</span>`;
+            focusLapsList.prepend(lapItem);
+        } else {
+            breakLapCounter++;
+            lapNumber = breakLapCounter;
+            lapItem.innerHTML = `No.${lapNumber}: ${formatTime(timeInSeconds)} <span class="lap-duration">${timeRange}</span>`;
+            breakLapsList.prepend(lapItem);
+        }
+    }
+
+    function updateTotalTimeDisplay() {
+        totalFocusTimeDisplay.textContent = `累計集中時間: ${formatTime(totalFocusSeconds)}`;
+        totalBreakTimeDisplay.textContent = `累計休憩時間: ${formatTime(totalBreakSeconds)}`;
+    }
+
+    function startMainTimerInterval() {
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            if (!isPaused) {
+                currentSeconds++;
+                updateTimerDisplay();
+            }
+        }, 1000);
+    }
+
+    function initializeState() {
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = null;
+
+        currentSeconds = 0;
+        currentMode = 'focus';
+        isTimerActive = false;
+        isPaused = false;
+
+        totalFocusSeconds = 0;
+        totalBreakSeconds = 0;
+        focusLapCounter = 0;
+        breakLapCounter = 0;
+        currentSessionStartTime = null;
+
+        updateTimerDisplay();
+        updateTotalTimeDisplay();
+        updateModeIndicatorAndBackground();
+        focusLapsList.innerHTML = '';
+        breakLapsList.innerHTML = '';
+
+        controlButton.textContent = '集中';
+        controlButton.className = 'focus';
+        controlButton.disabled = false;
+
+        pauseButton.textContent = '一時停止';
+        pauseButton.disabled = true;
+    }
+
+    controlButton.addEventListener('click', () => {
+        const sessionEndTime = new Date();
+
+        if (isTimerActive) {
+            if (!isPaused) {
+                 clearInterval(timerInterval);
+            }
+            const recordedTime = currentSeconds;
+
+            if (currentMode === 'focus') {
+                addLapTime('focus', recordedTime, currentSessionStartTime, sessionEndTime);
+                totalFocusSeconds += recordedTime;
+                currentMode = 'break';
+                controlButton.textContent = '集中';
+                controlButton.className = 'focus';
+            } else {
+                addLapTime('break', recordedTime, currentSessionStartTime, sessionEndTime);
+                totalBreakSeconds += recordedTime;
+                currentMode = 'focus';
+                controlButton.textContent = '休憩';
+                controlButton.className = 'break';
+            }
+            updateTotalTimeDisplay();
+        } else {
+            controlButton.textContent = '休憩';
+            controlButton.className = 'break';
+        }
+
+        currentSeconds = 0;
+        updateTimerDisplay();
+        isTimerActive = true;
+        isPaused = false;
+        currentSessionStartTime = new Date();
+        updateModeIndicatorAndBackground();
+        pauseButton.textContent = '一時停止';
+        pauseButton.disabled = false;
+        startMainTimerInterval();
+    });
+
+    pauseButton.addEventListener('click', () => {
+        if (!isTimerActive) return;
+
+        isPaused = !isPaused;
+        updateModeIndicatorAndBackground();
+
+        if (isPaused) {
+            pauseButton.textContent = '再開';
+        } else {
+            pauseButton.textContent = '一時停止';
+        }
+    });
+
+    resetButton.addEventListener('click', () => {
+        initializeState();
+    });
+
+    initializeState();
+
+</script>
+
+</body>
+</html>
