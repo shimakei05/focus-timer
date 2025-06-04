@@ -284,7 +284,7 @@
     const totalBreakTimeDisplay = document.getElementById('totalBreakTime');
 
     let timerInterval = null;
-    let currentSeconds = 0; // 表示用の現在の秒数
+    let currentSeconds = 0; // 表示用
     let currentMode = 'focus';
     let isTimerActive = false;
 
@@ -293,7 +293,7 @@
     let focusLapCounter = 0;
     let breakLapCounter = 0;
 
-    let currentSessionStartTime = null; // Dateオブジェクトを保持
+    let currentSessionStartTime = null; // Date オブジェクト
     let currentTaskDescription = "";
 
     function formatTime(totalSeconds, formatType = 'timer') {
@@ -316,10 +316,12 @@
     }
 
     function updateTimerDisplay() {
-        // isTimerActive の場合のみ、現在の時間と開始時間の差から currentSeconds を更新
         if (isTimerActive && currentSessionStartTime) {
             const now = new Date();
-            currentSeconds = Math.round((now - currentSessionStartTime) / 1000);
+            currentSeconds = Math.round((now.getTime() - currentSessionStartTime.getTime()) / 1000);
+        } else {
+            // isTimerActive が false の場合や currentSessionStartTime がない場合は
+            // currentSeconds はセッション終了時または初期化時の値のまま
         }
         timerDisplay.textContent = formatTime(currentSeconds);
     }
@@ -385,33 +387,37 @@
         console.log("startMainTimerInterval called. currentMode:", currentMode);
         if (timerInterval) clearInterval(timerInterval);
         isTimerActive = true;
-        // currentSessionStartTime はこの関数の呼び出し元で設定済みのはず
-        // currentSeconds は updateTimerDisplay で計算するので、ここでは0にしない
+        // currentSessionStartTime は呼び出し元で設定
+        // currentSeconds も呼び出し元で 0 に設定されているはず
 
+        updateTimerDisplay(); // 開始時に0秒表示を確実にする
         timerInterval = setInterval(function() {
-            // 毎秒 updateTimerDisplay を呼び出して表示を更新する
-            updateTimerDisplay();
-        }, 1000); // 1秒ごとに表示を更新
-        console.log("Timer started. Interval ID:", timerInterval);
+            updateTimerDisplay(); // 毎秒、開始時刻からの差分で表示を更新
+        }, 1000);
+        console.log("Timer started. Interval ID:", timerInterval, "StartTime:", currentSessionStartTime);
     }
 
-    function stopMainTimerInterval() {
-        console.log("stopMainTimerInterval called. Interval ID to clear:", timerInterval);
+    function stopMainTimerIntervalAndGetDuration() {
+        console.log("stopMainTimerIntervalAndGetDuration called. Interval ID to clear:", timerInterval, "StartTime:", currentSessionStartTime);
         clearInterval(timerInterval);
         isTimerActive = false;
-        // 停止時に正確な経過時間を計算して currentSeconds に設定
+        let duration = 0;
         if (currentSessionStartTime) {
-            const now = new Date();
-            currentSeconds = Math.round((now - currentSessionStartTime) / 1000);
-            updateTimerDisplay(); // 最後の表示を更新
+            const endTime = new Date();
+            duration = Math.round((endTime.getTime() - currentSessionStartTime.getTime()) / 1000);
+            currentSeconds = duration; // 最後に表示を合わせる
+            updateTimerDisplay(); // 最終的な時間を表示
+            console.log("Timer stopped. Duration (sec):", duration, "EndTime:", endTime);
+        } else {
+            console.warn("stopMainTimerIntervalAndGetDuration: currentSessionStartTime is null!");
         }
-        console.log("Timer stopped. isTimerActive:", isTimerActive, "Final currentSeconds:", currentSeconds);
+        return duration;
     }
 
     function initializeState() {
         console.log("initializeState called");
-        if (timerInterval) clearInterval(timerInterval); // isTimerActiveをfalseにする前にクリア
-        isTimerActive = false; // stopMainTimerInterval を呼ばないのでここで設定
+        if (timerInterval) clearInterval(timerInterval);
+        isTimerActive = false;
         timerInterval = null;
 
         currentSeconds = 0;
@@ -425,7 +431,7 @@
         currentTaskDescription = "";
         taskInput.value = "";
 
-        updateTimerDisplay(); // currentSeconds が 0 になっているので表示も0になる
+        updateTimerDisplay();
         updateTotalTimeDisplay();
         updateModeIndicatorAndBackground();
         focusLapsList.innerHTML = '';
@@ -440,7 +446,7 @@
 
     controlButton.addEventListener('click', function() {
         console.log("--- Button clicked ---");
-        console.log("Before action - Mode:", currentMode, "Active:", isTimerActive, "Seconds:", currentSeconds, "StartTime:", currentSessionStartTime);
+        console.log("Before action - Mode:", currentMode, "Active:", isTimerActive, "Current Display Seconds:", currentSeconds, "StartTime:", currentSessionStartTime);
 
         if (currentMode === 'focus') {
             if (!isTimerActive) { // 「集中スタート！」ボタン (集中開始)
@@ -451,19 +457,15 @@
                 controlButton.textContent = '休憩する';
                 controlButton.className = 'break';
 
-                currentSeconds = 0; // 新しいセッションなので0から
-                currentSessionStartTime = new Date(); // 開始時刻を記録
-                updateTimerDisplay(); // 0秒表示
+                currentSeconds = 0; // 表示を0から開始
+                currentSessionStartTime = new Date();
                 startMainTimerInterval();
-                console.log("Focus started. Task:", currentTaskDescription, "Start time:", currentSessionStartTime);
             } else { // 「休憩する」ボタン (集中終了 -> 休憩開始)
                 console.log("Action: End Focus, Start Break");
-                stopMainTimerInterval(); // タイマーを止め、正確なcurrentSecondsを計算
-                const recordedTime = currentSeconds; // stopMainTimerIntervalで計算された正確な値
-                console.log("Focus ended. Recorded time (sec):", recordedTime, "Session start:", currentSessionStartTime, "End time:", new Date());
+                const recordedTime = stopMainTimerIntervalAndGetDuration(); // タイマーを止め、正確な期間を取得
+                console.log("Focus ended. Recorded time (sec):", recordedTime);
                 addLapTime('focus', recordedTime, currentSessionStartTime, new Date(), currentTaskDescription);
                 totalFocusSeconds += recordedTime;
-                console.log("Total focus time (sec):", totalFocusSeconds);
 
                 currentMode = 'break';
                 controlButton.textContent = '集中スタート！';
@@ -471,34 +473,29 @@
                 taskInput.value = "";
                 taskInput.disabled = false;
 
-                currentSeconds = 0; // 休憩タイマーリセット
+                currentSeconds = 0; // 表示を0から開始
                 currentSessionStartTime = new Date(); // 休憩開始時刻
-                updateTimerDisplay(); // 0秒表示
-                startMainTimerInterval(); // 休憩タイマー開始
-                console.log("Break started. Session start time:", currentSessionStartTime);
+                startMainTimerInterval();
             }
         } else { // currentMode === 'break' (「集中スタート！」ボタンが押されたので休憩終了 -> 集中再開)
             console.log("Action: End Break, Start Focus");
-            stopMainTimerInterval(); // タイマーを止め、正確なcurrentSecondsを計算
-            const recordedTime = currentSeconds; // stopMainTimerIntervalで計算された正確な値
-            console.log("Break ended. Recorded time (sec):", recordedTime, "Session start:", currentSessionStartTime, "End time:", new Date());
+            const recordedTime = stopMainTimerIntervalAndGetDuration(); // タイマーを止め、正確な期間を取得
+            console.log("Break ended. Recorded time (sec):", recordedTime);
             addLapTime('break', recordedTime, currentSessionStartTime, new Date());
             totalBreakSeconds += recordedTime;
-            console.log("Total break time (sec):", totalBreakSeconds);
 
             currentMode = 'focus';
-            taskInput.disabled = false; // 次の集中内容を入力可能に
+            taskInput.disabled = false;
 
             controlButton.textContent = '集中スタート！'; // ユーザーが再度押すのを待つ
-            // isTimerActive は stopMainTimerInterval で false になっている
-            currentSeconds = 0;    // 表示タイマーリセット
-            updateTimerDisplay(); // 0秒表示
-            currentSessionStartTime = null; // 次の開始時刻はまだ
-            console.log("Ready for next focus session. Enter task and press '集中スタート！'");
+            currentSeconds = 0;
+            updateTimerDisplay(); // 表示リセット
+            currentSessionStartTime = null; // 次の集中開始までnull
+            // isTimerActive は stopMainTimerIntervalAndGetDuration で false になっている
         }
         updateTotalTimeDisplay();
         updateModeIndicatorAndBackground();
-        console.log("After action - Mode:", currentMode, "Active:", isTimerActive, "Seconds:", currentSeconds, "StartTime:", currentSessionStartTime);
+        console.log("After action - Mode:", currentMode, "Active:", isTimerActive, "Current Display Seconds:", currentSeconds, "StartTime:", currentSessionStartTime);
         console.log("--- Click event finished ---");
     });
 
