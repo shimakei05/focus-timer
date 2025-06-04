@@ -65,18 +65,35 @@
     }
 
     #controlButton, #resetButton {
-        font-size: 1.5rem;
-        padding: 12px 25px;
+        /* font-size はボタン内のspanで個別に指定するため削除 */
+        padding: 10px 20px; /* パディングを少し調整 */
         border: none;
         border-radius: 5px;
         cursor: pointer;
         transition: background-color 0.3s ease;
         width: 100%;
         margin-bottom: 10px;
+        line-height: 1.4; /* 複数行のテキストのため */
     }
     #controlButton:last-child, #resetButton:last-child {
         margin-bottom: 0;
     }
+
+    /* ボタン内テキストのスタイル */
+    .button-label-small {
+        font-size: 0.8em; /* 小さい文字 */
+        display: block; /* 改行させるため */
+    }
+    .button-label-large {
+        font-size: 1.5em; /* 大きい文字 (元のボタンのフォントサイズ基準) */
+        font-weight: bold;
+        display: block; /* 改行させるため */
+    }
+    /* リセットボタンはこれまで通りのフォントサイズ */
+    #resetButton {
+        font-size: 1.5rem;
+    }
+
 
     #controlButton.focus {
         background-color: #3498db;
@@ -103,130 +120,35 @@
         background-color: #c0392b;
     }
 
-    .laps-section {
-        margin-top: 20px;
-        text-align: left;
-        width: 100%;
-    }
-
-    .laps-section h3 {
-        margin-bottom: 5px;
-        color: #7f8c8d;
-        border-bottom: 1px solid #bdc3c7;
-        padding-bottom: 5px;
-    }
-
-    .total-time {
-        margin-bottom: 10px;
-        font-weight: bold;
-        font-size: 1.0rem;
-    }
-
-    .laps-list {
-        list-style-type: none;
-        padding: 0;
-        max-height: 150px;
-        overflow-y: auto;
-        background-color: #f9f9f9;
-        border: 1px solid #eee;
-        border-radius: 3px;
-    }
-
-    .laps-list li {
-        padding: 8px 10px;
-        border-bottom: 1px solid #eee;
-        font-size: 0.9rem;
-        line-height: 1.4;
-    }
-    .laps-list li:last-child {
-        border-bottom: none;
-    }
-    .lap-duration {
-        display: block;
-        font-size: 0.8em;
-        color: #555;
-        margin-left: 25px;
-    }
-    .lap-task {
-        display: block;
-        font-size: 0.9em;
-        color: #333;
-        margin-top: 3px;
-        margin-left: 25px;
-        white-space: pre-wrap;
-        word-break: break-all;
-    }
-
-    .columns {
-        display: flex;
-        justify-content: space-between;
-        gap: 20px;
-    }
-    .column {
-        flex: 1;
-    }
-
-    .usage-guide {
-        width: 90%;
-        max-width: 500px;
-        background-color: #f9f9f9;
-        padding: 20px;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-        text-align: left;
-        font-size: 0.9rem;
-        line-height: 1.6;
-        color: #555;
-    }
-    .usage-guide h4 {
-        margin-top: 0;
-        color: #333;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 5px;
-        margin-bottom: 10px;
-    }
-    .usage-guide ul {
-        padding-left: 20px;
-        margin-top: 0;
-    }
-    .usage-guide li {
-        margin-bottom: 8px;
-    }
+    /* 他のCSSは変更なしのため省略 */
+    .laps-section { margin-top: 20px; text-align: left; width: 100%; }
+    .laps-section h3 { margin-bottom: 5px; color: #7f8c8d; border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; }
+    .total-time { margin-bottom: 10px; font-weight: bold; font-size: 1.0rem; }
+    .laps-list { list-style-type: none; padding: 0; max-height: 150px; overflow-y: auto; background-color: #f9f9f9; border: 1px solid #eee; border-radius: 3px; }
+    .laps-list li { padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; line-height: 1.4; }
+    .laps-list li:last-child { border-bottom: none; }
+    .lap-duration { display: block; font-size: 0.8em; color: #555; margin-left: 25px; }
+    .lap-task { display: block; font-size: 0.9em; color: #333; margin-top: 3px; margin-left: 25px; white-space: pre-wrap; word-break: break-all; }
+    .columns { display: flex; justify-content: space-between; gap: 20px; }
+    .column { flex: 1; }
+    .usage-guide { width: 90%; max-width: 500px; background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; text-align: left; font-size: 0.9rem; line-height: 1.6; color: #555; }
+    .usage-guide h4 { margin-top: 0; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px; }
+    .usage-guide ul { padding-left: 20px; margin-top: 0; }
+    .usage-guide li { margin-bottom: 8px; }
 
     @media (max-width: 600px) {
-        body {
-            padding-top: 10px;
-            padding-bottom: 10px;
-        }
-        .timer-container {
-            margin-bottom: 20px;
-            padding: 20px;
-        }
-        #modeIndicator {
-            font-size: 1.5rem;
-        }
-        #timerDisplay {
-            font-size: 3rem;
-        }
-        #controlButton, #resetButton {
-            font-size: 1.2rem;
-        }
-        .columns {
-            flex-direction: column;
-        }
-        #taskInput {
-            min-height: 40px;
-        }
-        .total-time {
-            font-size: 0.9rem;
-        }
-        .usage-guide {
-            font-size: 0.85rem;
-            padding: 15px;
-        }
-        .usage-guide ul {
-            padding-left: 15px;
-        }
+        body { padding-top: 10px; padding-bottom: 10px; }
+        .timer-container { margin-bottom: 20px; padding: 20px; }
+        #modeIndicator { font-size: 1.5rem; }
+        #timerDisplay { font-size: 3rem; }
+        #controlButton { /* font-sizeはspanで制御 */ padding: 8px 15px; }
+        #resetButton { font-size: 1.2rem; }
+        .button-label-large { font-size: 1.2em; } /* スマホ用に調整 */
+        .columns { flex-direction: column; }
+        #taskInput { min-height: 40px; }
+        .total-time { font-size: 0.9rem; }
+        .usage-guide { font-size: 0.85rem; padding: 15px; }
+        .usage-guide ul { padding-left: 15px; }
     }
 </style>
 </head>
@@ -236,7 +158,11 @@
     <div id="modeIndicator">---</div>
     <div id="timerDisplay">00:00:00</div>
     <textarea id="taskInput" placeholder="ここに集中する内容を入力... (任意)"></textarea>
-    <button id="controlButton" class="focus">集中スタート！</button>
+    <button id="controlButton" class="focus">
+        <!-- 初期表示のボタンテキスト -->
+        <span class="button-label-small">集中内容を入力して</span>
+        <span class="button-label-large">集中スタート！</span>
+    </button>
 
     <div class="columns">
         <div class="column">
@@ -284,7 +210,7 @@
     const totalBreakTimeDisplay = document.getElementById('totalBreakTime');
 
     let timerInterval = null;
-    let currentSeconds = 0; // 表示用
+    let currentSeconds = 0;
     let currentMode = 'focus';
     let isTimerActive = false;
 
@@ -293,8 +219,19 @@
     let focusLapCounter = 0;
     let breakLapCounter = 0;
 
-    let currentSessionStartTime = null; // Date オブジェクト
+    let currentSessionStartTime = null;
     let currentTaskDescription = "";
+
+    // ボタンのテキストを更新するヘルパー関数
+    function updateButtonText(smallText, largeText, isBreakButton = false) {
+        controlButton.innerHTML = `<span class="button-label-small">${smallText}</span><span class="button-label-large">${largeText}</span>`;
+        if (isBreakButton) {
+            controlButton.className = 'break';
+        } else {
+            controlButton.className = 'focus';
+        }
+    }
+
 
     function formatTime(totalSeconds, formatType = 'timer') {
         const hours = Math.floor(totalSeconds / 3600);
@@ -319,9 +256,6 @@
         if (isTimerActive && currentSessionStartTime) {
             const now = new Date();
             currentSeconds = Math.round((now.getTime() - currentSessionStartTime.getTime()) / 1000);
-        } else {
-            // isTimerActive が false の場合や currentSessionStartTime がない場合は
-            // currentSeconds はセッション終了時または初期化時の値のまま
         }
         timerDisplay.textContent = formatTime(currentSeconds);
     }
@@ -384,45 +318,33 @@
     }
 
     function startMainTimerInterval() {
-        console.log("startMainTimerInterval called. currentMode:", currentMode);
         if (timerInterval) clearInterval(timerInterval);
         isTimerActive = true;
-        // currentSessionStartTime は呼び出し元で設定
-        // currentSeconds も呼び出し元で 0 に設定されているはず
-
-        updateTimerDisplay(); // 開始時に0秒表示を確実にする
+        updateTimerDisplay();
         timerInterval = setInterval(function() {
-            updateTimerDisplay(); // 毎秒、開始時刻からの差分で表示を更新
+            updateTimerDisplay();
         }, 1000);
-        console.log("Timer started. Interval ID:", timerInterval, "StartTime:", currentSessionStartTime);
     }
 
     function stopMainTimerIntervalAndGetDuration() {
-        console.log("stopMainTimerIntervalAndGetDuration called. Interval ID to clear:", timerInterval, "StartTime:", currentSessionStartTime);
         clearInterval(timerInterval);
         isTimerActive = false;
         let duration = 0;
         if (currentSessionStartTime) {
             const endTime = new Date();
             duration = Math.round((endTime.getTime() - currentSessionStartTime.getTime()) / 1000);
-            currentSeconds = duration; // 最後に表示を合わせる
-            updateTimerDisplay(); // 最終的な時間を表示
-            console.log("Timer stopped. Duration (sec):", duration, "EndTime:", endTime);
-        } else {
-            console.warn("stopMainTimerIntervalAndGetDuration: currentSessionStartTime is null!");
+            currentSeconds = duration;
+            updateTimerDisplay();
         }
         return duration;
     }
 
     function initializeState() {
-        console.log("initializeState called");
         if (timerInterval) clearInterval(timerInterval);
         isTimerActive = false;
         timerInterval = null;
-
         currentSeconds = 0;
         currentMode = 'focus';
-
         totalFocusSeconds = 0;
         totalBreakSeconds = 0;
         focusLapCounter = 0;
@@ -437,74 +359,57 @@
         focusLapsList.innerHTML = '';
         breakLapsList.innerHTML = '';
 
-        controlButton.textContent = '集中スタート！';
-        controlButton.className = 'focus';
+        updateButtonText('集中内容を入力して', '集中スタート！', false); // 初期ボタンテキスト設定
         controlButton.disabled = false;
         taskInput.disabled = false;
-        console.log("State initialized");
     }
 
     controlButton.addEventListener('click', function() {
-        console.log("--- Button clicked ---");
-        console.log("Before action - Mode:", currentMode, "Active:", isTimerActive, "Current Display Seconds:", currentSeconds, "StartTime:", currentSessionStartTime);
-
         if (currentMode === 'focus') {
             if (!isTimerActive) { // 「集中スタート！」ボタン (集中開始)
-                console.log("Action: Start Focus");
                 currentTaskDescription = taskInput.value.trim();
                 taskInput.disabled = true;
+                updateButtonText('', '休憩する', true); // ボタンテキストを「休憩する」に
 
-                controlButton.textContent = '休憩する';
-                controlButton.className = 'break';
-
-                currentSeconds = 0; // 表示を0から開始
+                currentSeconds = 0;
                 currentSessionStartTime = new Date();
                 startMainTimerInterval();
             } else { // 「休憩する」ボタン (集中終了 -> 休憩開始)
-                console.log("Action: End Focus, Start Break");
-                const recordedTime = stopMainTimerIntervalAndGetDuration(); // タイマーを止め、正確な期間を取得
-                console.log("Focus ended. Recorded time (sec):", recordedTime);
+                const recordedTime = stopMainTimerIntervalAndGetDuration();
                 addLapTime('focus', recordedTime, currentSessionStartTime, new Date(), currentTaskDescription);
                 totalFocusSeconds += recordedTime;
 
                 currentMode = 'break';
-                controlButton.textContent = '集中スタート！';
-                controlButton.className = 'focus';
+                updateButtonText('集中内容を入力して', '集中スタート！', false); // ボタンテキストを「集中スタート！」に戻す
                 taskInput.value = "";
                 taskInput.disabled = false;
 
-                currentSeconds = 0; // 表示を0から開始
-                currentSessionStartTime = new Date(); // 休憩開始時刻
-                startMainTimerInterval();
+                currentSeconds = 0;
+                currentSessionStartTime = new Date();
+                startMainTimerInterval(); // 休憩タイマー開始
             }
-        } else { // currentMode === 'break' (「集中スタート！」ボタンが押されたので休憩終了 -> 集中再開)
-            console.log("Action: End Break, Start Focus");
-            const recordedTime = stopMainTimerIntervalAndGetDuration(); // タイマーを止め、正確な期間を取得
-            console.log("Break ended. Recorded time (sec):", recordedTime);
+        } else { // currentMode === 'break' (「集中スタート！」ボタンが押されたので休憩終了 -> 即座に集中再開)
+            const recordedTime = stopMainTimerIntervalAndGetDuration();
             addLapTime('break', recordedTime, currentSessionStartTime, new Date());
             totalBreakSeconds += recordedTime;
 
             currentMode = 'focus';
-            taskInput.disabled = false;
+            currentTaskDescription = taskInput.value.trim();
+            taskInput.disabled = true;
+            updateButtonText('', '休憩する', true); // ボタンテキストを「休憩する」に
 
-            controlButton.textContent = '集中スタート！'; // ユーザーが再度押すのを待つ
             currentSeconds = 0;
-            updateTimerDisplay(); // 表示リセット
-            currentSessionStartTime = null; // 次の集中開始までnull
-            // isTimerActive は stopMainTimerIntervalAndGetDuration で false になっている
+            currentSessionStartTime = new Date();
+            startMainTimerInterval();
         }
         updateTotalTimeDisplay();
         updateModeIndicatorAndBackground();
-        console.log("After action - Mode:", currentMode, "Active:", isTimerActive, "Current Display Seconds:", currentSeconds, "StartTime:", currentSessionStartTime);
-        console.log("--- Click event finished ---");
     });
 
     resetButton.addEventListener('click', function() {
-        console.log("Reset button clicked. Initializing state.");
         initializeState();
     });
 
-    console.log("Initializing timer state on page load.");
     initializeState();
 </script>
 
