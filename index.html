@@ -250,8 +250,8 @@
 
     let totalFocusSeconds = 0;
     let totalBreakSeconds = 0;
-    let focusLapCounter = 0;
-    let breakLapCounter = 0;
+    let focusLapCounter = 0; // ページを開いてからのセッションカウンター（画面表示用）
+    let breakLapCounter = 0; // ページを開いてからのセッションカウンター（画面表示用）
 
     let currentSessionStartTime = null;
     let currentTaskDescription = "";
@@ -275,7 +275,7 @@
             return recordsJson ? JSON.parse(recordsJson) : [];
         } catch (e) {
             console.error("Failed to load records from localStorage:", e);
-            return []; // エラー時は空の配列を返す
+            return [];
         }
     }
 
@@ -284,8 +284,7 @@
             try {
                 localStorage.removeItem(STORAGE_KEY);
                 alert("全ての作業記録が削除されました。");
-                initializeTaskSummary(); // 集計表示もリセット
-                populateTaskSelector(); // ドロップダウンも更新
+                initializeState(); // 全ての状態をリセットして再描画
                 console.log("All records cleared from localStorage.");
             } catch (e) {
                 console.error("Failed to clear records from localStorage:", e);
@@ -303,9 +302,10 @@
 
     function getStartOfWeek(date) { // 月曜始まり
         const d = new Date(date);
-        const day = d.getDay(); // 0 (Sun) - 6 (Sat)
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // day is 0 (Sun), so -6, else +1
-        return new Date(d.setDate(diff));
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        const startOfWeek = new Date(d.setDate(diff));
+        return getStartOfDay(startOfWeek); // 週の開始も0時0分0秒に
     }
 
     function getStartOfMonth(date) {
@@ -364,11 +364,14 @@
             bodyElement.classList.remove('focus-mode-bg', 'break-mode-bg');
         }
     }
-    function addLapTime(mode, timeInSeconds, sessionStartTime, sessionEndTime, taskDesc) {
+
+    // この関数は新しいラップをリストに追加する専用とする
+    // initializeStateでのリスト再構築は別で行う
+    function addLapToScreen(mode, timeInSeconds, sessionStartTime, sessionEndTime, taskDesc, lapNumberToDisplay) {
         const lapItem = document.createElement('li');
         const formattedDuration = formatTime(timeInSeconds, 'japanese');
-        const formattedStartTime = formatHoursMinutes(new Date(sessionStartTime)); // Dateオブジェクトに変換
-        const formattedEndTime = formatHoursMinutes(new Date(sessionEndTime));   // Dateオブジェクトに変換
+        const formattedStartTime = formatHoursMinutes(new Date(sessionStartTime));
+        const formattedEndTime = formatHoursMinutes(new Date(sessionEndTime));
         const timeRange = (formattedStartTime && formattedEndTime) ? '(' + formattedStartTime + '～' + formattedEndTime + ')' : '';
         let taskHtml = '';
 
@@ -382,15 +385,14 @@
         }
 
         if (mode === 'focus') {
-            focusLapCounter++;
-            lapItem.innerHTML = focusLapCounter + '回目 ' + formattedDuration + ' <span class="lap-duration">' + timeRange + '</span>' + taskHtml;
+            lapItem.innerHTML = lapNumberToDisplay + '回目 ' + formattedDuration + ' <span class="lap-duration">' + timeRange + '</span>' + taskHtml;
             focusLapsList.prepend(lapItem);
         } else {
-            breakLapCounter++;
-            lapItem.innerHTML = breakLapCounter + '回目 ' + formattedDuration + ' <span class="lap-duration">' + timeRange + '</span>';
+            lapItem.innerHTML = lapNumberToDisplay + '回目 ' + formattedDuration + ' <span class="lap-duration">' + timeRange + '</span>';
             breakLapsList.prepend(lapItem);
         }
     }
+
     function updateTotalTimeDisplay() {
         totalFocusTimeDisplay.textContent = 'トータル集中時間: ' + formatTime(totalFocusSeconds, 'japanese');
         totalBreakTimeDisplay.textContent = 'トータル休憩時間: ' + formatTime(totalBreakSeconds, 'japanese');
@@ -400,19 +402,19 @@
     function populateTaskSelector() {
         console.log("Populating task selector...");
         const records = loadAllRecords();
-        const taskTotals = {}; // { "タスク名": 合計時間 }
+        const taskTotals = {};
 
         records.forEach(record => {
-            if (record.mode === 'focus' && record.task) { // 集中モードでタスク名があるもののみ
+            if (record.mode === 'focus' && record.task) {
                 taskTotals[record.task] = (taskTotals[record.task] || 0) + record.duration;
             }
         });
 
         const sortedTasks = Object.entries(taskTotals)
-            .sort(([, a], [, b]) => b - a) // 合計時間の降順でソート
+            .sort(([, a], [, b]) => b - a)
             .map(([task]) => task);
 
-        taskSelector.innerHTML = '<option value="">タスクを選択してください</option>'; // 初期化
+        taskSelector.innerHTML = '<option value="">タスクを選択してください</option>';
         sortedTasks.forEach(task => {
             const option = document.createElement('option');
             option.value = task;
@@ -435,8 +437,8 @@
         const records = loadAllRecords();
         const now = new Date();
         const todayStart = getStartOfDay(now);
-        const weekStart = getStartOfWeek(getStartOfDay(now)); // 週の開始も0時0分0秒に
-        const monthStart = getStartOfMonth(getStartOfDay(now)); // 月の開始も0時0分0秒に
+        const weekStart = getStartOfWeek(now); // getStartOfWeek内でgetStartOfDayを呼ぶように修正済み
+        const monthStart = getStartOfMonth(now); // getStartOfMonth内でgetStartOfDayを呼ぶように修正済み
 
         let todayDuration = 0;
         let weekDuration = 0;
@@ -444,7 +446,7 @@
 
         records.forEach(record => {
             if (record.mode === 'focus' && record.task === selectedTask) {
-                const recordDate = new Date(record.isoDate); // 保存されたISO文字列からDateオブジェクトを復元
+                const recordDate = new Date(record.isoDate);
                 if (recordDate >= todayStart) {
                     todayDuration += record.duration;
                 }
@@ -463,66 +465,114 @@
         taskMonthTotalDisplay.innerHTML = '<strong>今月の合計:</strong> ' + formatTime(monthDuration, 'japanese');
     }
 
-    function initializeTaskSummary() {
-        populateTaskSelector();
-        updateTaskSummary(); // 初期表示（何も選択されていない状態）
-    }
-
     // --- タイマーロジック ---
     function startMainTimerInterval() {
+        console.log("startMainTimerInterval called. currentMode:", currentMode);
         if (timerInterval) clearInterval(timerInterval);
         isTimerActive = true;
-        updateTimerDisplay(); // 開始時に0秒または計算値を表示
+        updateTimerDisplay();
         timerInterval = setInterval(function() {
             updateTimerDisplay();
         }, 1000);
+        console.log("Timer started. Interval ID:", timerInterval, "StartTime:", currentSessionStartTime);
     }
 
     function stopMainTimerIntervalAndGetDuration() {
+        console.log("stopMainTimerIntervalAndGetDuration called. Interval ID to clear:", timerInterval, "StartTime:", currentSessionStartTime);
         clearInterval(timerInterval);
         isTimerActive = false;
         let duration = 0;
         if (currentSessionStartTime) {
             const endTime = new Date();
             duration = Math.round((endTime.getTime() - currentSessionStartTime.getTime()) / 1000);
-            currentSeconds = duration;
+            currentSeconds = duration; // 最終的な秒数を設定
+            updateTimerDisplay();    // 最終的な時間を表示
+        } else {
+            console.warn("stopMainTimerIntervalAndGetDuration: currentSessionStartTime is null!");
+            currentSeconds = 0; // 開始時刻がない場合は0秒とする
             updateTimerDisplay();
         }
+        console.log("Timer stopped. Duration (sec):", duration);
         return duration;
     }
 
     function initializeState() {
+        console.log("initializeState called");
         if (timerInterval) clearInterval(timerInterval);
         isTimerActive = false;
         timerInterval = null;
         currentSeconds = 0;
         currentMode = 'focus';
-        totalFocusSeconds = 0;
-        totalBreakSeconds = 0;
+
+        // トータル時間はリセットしない
+        // focusLapCounter と breakLapCounter は画面表示の「X回目」に使われるため、
+        // 今日の記録を再表示する際に、その日の続きからになるように調整する。
         focusLapCounter = 0;
         breakLapCounter = 0;
+
         currentSessionStartTime = null;
         currentTaskDescription = "";
         taskInput.value = "";
 
         updateTimerDisplay();
-        updateTotalTimeDisplay();
+        updateTotalTimeDisplay(); // 累計時間はlocalStorageから再計算するわけではないので、保持された値を表示
         updateModeIndicatorAndBackground();
+
+        // --- 画面上のラップリストを今日の記録のみで再描画 ---
         focusLapsList.innerHTML = '';
         breakLapsList.innerHTML = '';
+
+        const allRecords = loadAllRecords();
+        const todayStart = getStartOfDay(new Date());
+        let todaysFocusCountForDisplay = 0;
+        let todaysBreakCountForDisplay = 0;
+
+        // 今日の記録だけをフィルタリングし、表示順（新しいものが上）にするために一度逆順にする
+        const todaysRecordsToDisplay = allRecords.filter(record => new Date(record.isoDate) >= todayStart);
+
+        // 画面表示の「X回目」を正しくするために、今日記録されたもののうち、
+        // 集中が何回、休憩が何回あったかを先に数える
+        todaysRecordsToDisplay.forEach(record => {
+            if (record.mode === 'focus') todaysFocusCountForDisplay++;
+            if (record.mode === 'break') todaysBreakCountForDisplay++;
+        });
+
+        // 画面上のカウンターを、今日記録された最大回数に設定
+        focusLapCounter = todaysFocusCountForDisplay;
+        breakLapCounter = todaysBreakCountForDisplay;
+
+        // 実際に画面にリストアイテムを追加する際は、各モードの「X回目」を逆順に振る
+        let currentDisplayFocusLap = todaysFocusCountForDisplay;
+        let currentDisplayBreakLap = todaysBreakCountForDisplay;
+
+        todaysRecordsToDisplay.reverse().forEach(record => { // 保存は時系列順なので、表示は逆順から
+            if (record.mode === 'focus') {
+                addLapToScreen(record.mode, record.duration, record.startTime, record.endTime, record.task, currentDisplayFocusLap--);
+            } else if (record.mode === 'break') {
+                addLapToScreen(record.mode, record.duration, record.startTime, record.endTime, record.task, currentDisplayBreakLap--);
+            }
+        });
+        // --- ここまでが画面上のラップリスト再描画処理 ---
+
         updateButtonText('集中内容を入力して', '集中スタート！', false);
         controlButton.disabled = false;
         taskInput.disabled = false;
 
-        initializeTaskSummary(); // タスク集計も初期化
+        populateTaskSelector(); // タスクドロップダウンも更新
+        updateTaskSummary();    // タスク集計も更新
+        console.log("State initialized and today's laps displayed. Focus laps:", focusLapCounter, "Break laps:", breakLapCounter);
     }
+
 
     // --- イベントリスナー ---
     controlButton.addEventListener('click', function() {
-        const sessionEndTime = new Date(); // 常に現在の時刻を終了候補として保持
+        console.log("--- Button clicked ---");
+        console.log("Before action - Mode:", currentMode, "Active:", isTimerActive, "Current Display Seconds:", currentSeconds, "StartTime:", currentSessionStartTime);
+        const sessionEndTimeForRecord = new Date(); // 記録用の終了時刻
 
         if (currentMode === 'focus') {
             if (!isTimerActive) { // 「集中スタート！」ボタン (集中開始)
+                console.log("Action: Start Focus");
                 currentTaskDescription = taskInput.value.trim();
                 taskInput.disabled = true;
                 updateButtonText('', '休憩する', true);
@@ -530,20 +580,22 @@
                 currentSessionStartTime = new Date();
                 startMainTimerInterval();
             } else { // 「休憩する」ボタン (集中終了 -> 休憩開始)
+                console.log("Action: End Focus, Start Break");
                 const recordedTime = stopMainTimerIntervalAndGetDuration();
                 const record = {
                     mode: 'focus',
                     task: currentTaskDescription,
                     duration: recordedTime,
-                    startTime: currentSessionStartTime.toISOString(), // ISO文字列で保存
-                    endTime: sessionEndTime.toISOString(),       // ISO文字列で保存
-                    isoDate: currentSessionStartTime.toISOString() // 集計用に日付もISOで
+                    startTime: currentSessionStartTime.toISOString(),
+                    endTime: sessionEndTimeForRecord.toISOString(),
+                    isoDate: currentSessionStartTime.toISOString() // 集計用
                 };
                 saveRecord(record);
-                addLapTime('focus', recordedTime, currentSessionStartTime, sessionEndTime, currentTaskDescription);
+                focusLapCounter++; // 画面表示用のカウンターを増やす
+                addLapToScreen('focus', recordedTime, currentSessionStartTime, sessionEndTimeForRecord, currentTaskDescription, focusLapCounter);
                 totalFocusSeconds += recordedTime;
-                populateTaskSelector(); // タスクリスト更新
-                updateTaskSummary();    // 集計更新
+                populateTaskSelector();
+                updateTaskSummary();
 
                 currentMode = 'break';
                 updateButtonText('集中内容を入力して', '集中スタート！', false);
@@ -554,18 +606,20 @@
                 startMainTimerInterval();
             }
         } else { // currentMode === 'break' (「集中スタート！」ボタン -> 休憩終了 & 即集中開始)
+            console.log("Action: End Break, Start Focus Immediately");
             const recordedTime = stopMainTimerIntervalAndGetDuration();
             const record = {
                 mode: 'break',
                 duration: recordedTime,
                 startTime: currentSessionStartTime.toISOString(),
-                endTime: sessionEndTime.toISOString(),
+                endTime: sessionEndTimeForRecord.toISOString(),
                 isoDate: currentSessionStartTime.toISOString()
             };
             saveRecord(record);
-            addLapTime('break', recordedTime, currentSessionStartTime, sessionEndTime);
+            breakLapCounter++; // 画面表示用のカウンターを増やす
+            addLapToScreen('break', recordedTime, currentSessionStartTime, sessionEndTimeForRecord, null, breakLapCounter);
             totalBreakSeconds += recordedTime;
-            // 休憩記録後はタスクリストやサマリーの更新は不要（休憩にはタスク名がないため）
+            // 休憩後はタスクサマリーの更新は不要
 
             currentMode = 'focus';
             currentTaskDescription = taskInput.value.trim();
@@ -577,46 +631,33 @@
         }
         updateTotalTimeDisplay();
         updateModeIndicatorAndBackground();
+        console.log("After action - Mode:", currentMode, "Active:", isTimerActive, "Current Display Seconds:", currentSeconds, "StartTime:", currentSessionStartTime);
+        console.log("--- Click event finished ---");
     });
 
     resetButton.addEventListener('click', function() {
+        console.log("Reset button clicked. Initializing state (current timer and screen laps).");
         // タイマーの状態と画面上のラップのみリセット、ローカルストレージはそのまま
         if (timerInterval) clearInterval(timerInterval);
         isTimerActive = false;
         timerInterval = null;
         currentSeconds = 0;
-        // currentMode はリセットしない（もし集中中や休憩中ならそのモードの準備状態に戻る）
-        // totalFocusSeconds = 0; // トータル時間はリセットしない
-        // totalBreakSeconds = 0; // トータル時間はリセットしない
-        focusLapCounter = 0;
+        // currentMode はリセットしない（もし集中中や休憩中ならそのモードの準備状態に戻るため、initializeStateに任せる）
+        // totalFocusSeconds, totalBreakSeconds はリセットしない
+        focusLapCounter = 0; // 画面上のラップはクリアするのでカウンターもリセット
         breakLapCounter = 0;
-        // currentSessionStartTime = null; // リセット時は次の開始待ちなのでnullで良い
-        currentTaskDescription = ""; // 入力中のタスクはクリア
-        taskInput.value = "";
+        currentSessionStartTime = null;
+        currentTaskDescription = taskInput.value; // リセット前に編集中だったタスクは残すか？ -> initializeStateでクリアされる
 
-        updateTimerDisplay();
-        // updateTotalTimeDisplay(); // トータル時間はリセットしないので呼ばない
-        updateModeIndicatorAndBackground();
-        focusLapsList.innerHTML = ''; // 画面上のラップはクリア
-        breakLapsList.innerHTML = ''; // 画面上のラップはクリア
-
-        if (currentMode === 'break') { // もし休憩モードでリセットしたら集中準備OK状態に
-            currentMode = 'focus';
-            updateButtonText('集中内容を入力して', '集中スタート！', false);
-            taskInput.disabled = false;
-        } else { // 集中モード（または初期状態）でリセット
-             updateButtonText('集中内容を入力して', '集中スタート！', false);
-             taskInput.disabled = false;
-        }
-        controlButton.disabled = false;
+        initializeState(); // 画面表示を含め、総合的に初期化
     });
 
     clearAllDataButton.addEventListener('click', clearAllStoredData);
     taskSelector.addEventListener('change', updateTaskSummary);
 
     // --- 初期化 ---
-    initializeState(); // タイマーの基本的な状態を初期化
-    // initializeTaskSummary(); // ローカルストレージを読み込みタスク集計関連を初期化（initializeState内で呼ばれる）
+    console.log("Initializing timer state on page load.");
+    initializeState();
 </script>
 
 </body>
