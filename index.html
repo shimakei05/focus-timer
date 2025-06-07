@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -11,7 +13,7 @@
         flex-direction: column;
         align-items: center;
         padding-top: 20px;
-        padding-bottom: 20px;
+        padding-bottom: 40px; /* フッターとのスペース確保 */
         min-height: 100vh;
         margin: 0;
         background-color: #f0f0f0;
@@ -25,15 +27,15 @@
         background-color: #d5f5e3;
     }
 
-    .timer-container {
+    .timer-container, .task-summary-container, .usage-guide, .data-management-container {
         background-color: #fff;
-        padding: 30px;
+        padding: 20px; /* 少し小さく */
         border-radius: 10px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         text-align: center;
         width: 90%;
         max-width: 500px;
-        margin-bottom: 30px;
+        margin-bottom: 25px; /* 各コンテナ間のマージン */
     }
 
     #modeIndicator {
@@ -64,63 +66,38 @@
         resize: vertical;
     }
 
-    #controlButton, #resetButton {
-        /* font-size はボタン内のspanで個別に指定するため削除 */
-        padding: 10px 20px; /* パディングを少し調整 */
+    #controlButton, #resetButton, #clearAllDataButton {
+        padding: 10px 20px;
         border: none;
         border-radius: 5px;
         cursor: pointer;
         transition: background-color 0.3s ease;
         width: 100%;
         margin-bottom: 10px;
-        line-height: 1.4; /* 複数行のテキストのため */
+        line-height: 1.4;
     }
-    #controlButton:last-child, #resetButton:last-child {
+     #controlButton:last-child, #resetButton:last-child, #clearAllDataButton:last-child {
         margin-bottom: 0;
     }
 
-    /* ボタン内テキストのスタイル */
-    .button-label-small {
-        font-size: 0.8em; /* 小さい文字 */
-        display: block; /* 改行させるため */
-    }
-    .button-label-large {
-        font-size: 1.5em; /* 大きい文字 (元のボタンのフォントサイズ基準) */
-        font-weight: bold;
-        display: block; /* 改行させるため */
-    }
-    /* リセットボタンはこれまで通りのフォントサイズ */
-    #resetButton {
-        font-size: 1.5rem;
-    }
+
+    .button-label-small { font-size: 0.8em; display: block; }
+    .button-label-large { font-size: 1.5em; font-weight: bold; display: block; }
+    #resetButton, #clearAllDataButton { font-size: 1.2rem; } /* ボタンの基本フォントサイズ */
 
 
-    #controlButton.focus {
-        background-color: #3498db;
-        color: white;
-    }
-    #controlButton.focus:hover {
-        background-color: #2980b9;
-    }
+    #controlButton.focus { background-color: #3498db; color: white; }
+    #controlButton.focus:hover { background-color: #2980b9; }
+    #controlButton.break { background-color: #2ecc71; color: white; }
+    #controlButton.break:hover { background-color: #27ae60; }
 
-    #controlButton.break {
-        background-color: #2ecc71;
-        color: white;
-    }
-    #controlButton.break:hover {
-        background-color: #27ae60;
-    }
+    #resetButton { background-color: #e74c3c; color: white; margin-top: 10px; }
+    #resetButton:hover { background-color: #c0392b; }
 
-    #resetButton {
-        background-color: #e74c3c;
-        color: white;
-        margin-top: 20px;
-    }
-    #resetButton:hover {
-        background-color: #c0392b;
-    }
+    #clearAllDataButton { background-color: #95a5a6; color: white; margin-top: 10px; }
+    #clearAllDataButton:hover { background-color: #7f8c8d; }
 
-    /* 他のCSSは変更なしのため省略 */
+
     .laps-section { margin-top: 20px; text-align: left; width: 100%; }
     .laps-section h3 { margin-bottom: 5px; color: #7f8c8d; border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; }
     .total-time { margin-bottom: 10px; font-weight: bold; font-size: 1.0rem; }
@@ -129,25 +106,52 @@
     .laps-list li:last-child { border-bottom: none; }
     .lap-duration { display: block; font-size: 0.8em; color: #555; margin-left: 25px; }
     .lap-task { display: block; font-size: 0.9em; color: #333; margin-top: 3px; margin-left: 25px; white-space: pre-wrap; word-break: break-all; }
-    .columns { display: flex; justify-content: space-between; gap: 20px; }
+    .columns { display: flex; justify-content: space-between; gap: 20px; margin-bottom:10px; }
     .column { flex: 1; }
-    .usage-guide { width: 90%; max-width: 500px; background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; text-align: left; font-size: 0.9rem; line-height: 1.6; color: #555; }
-    .usage-guide h4 { margin-top: 0; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px; }
+
+    /* タスク別集計エリア */
+    .task-summary-container h4 { margin-top: 0; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
+    #taskSelector {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+    .task-period-total {
+        text-align: left;
+        font-size: 0.95rem;
+        margin-bottom: 8px;
+        padding-left: 5px;
+    }
+    .task-period-total strong {
+        display: inline-block;
+        width: 110px; /* ラベル幅調整 */
+    }
+
+    .usage-guide, .data-management-container { text-align: left; font-size: 0.9rem; line-height: 1.6; color: #555; }
+    .usage-guide h4, .data-management-container h4 { margin-top: 0; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px; }
     .usage-guide ul { padding-left: 20px; margin-top: 0; }
     .usage-guide li { margin-bottom: 8px; }
 
+
     @media (max-width: 600px) {
-        body { padding-top: 10px; padding-bottom: 10px; }
-        .timer-container { margin-bottom: 20px; padding: 20px; }
+        body { padding-top: 10px; padding-bottom: 20px; }
+        .timer-container, .task-summary-container, .usage-guide, .data-management-container { margin-bottom: 20px; padding: 15px; }
         #modeIndicator { font-size: 1.5rem; }
         #timerDisplay { font-size: 3rem; }
-        #controlButton { /* font-sizeはspanで制御 */ padding: 8px 15px; }
-        #resetButton { font-size: 1.2rem; }
-        .button-label-large { font-size: 1.2em; } /* スマホ用に調整 */
+        #controlButton { padding: 8px 15px; }
+        #resetButton, #clearAllDataButton { font-size: 1.1rem; }
+        .button-label-large { font-size: 1.2em; }
         .columns { flex-direction: column; }
         #taskInput { min-height: 40px; }
         .total-time { font-size: 0.9rem; }
-        .usage-guide { font-size: 0.85rem; padding: 15px; }
+        .task-summary-container h4 { margin-bottom: 10px;}
+        #taskSelector { font-size: 0.85rem; margin-bottom: 10px; }
+        .task-period-total { font-size: 0.9rem; }
+        .task-period-total strong { width: 100px; }
+        .usage-guide, .data-management-container { font-size: 0.85rem; padding: 15px; }
         .usage-guide ul { padding-left: 15px; }
     }
 </style>
@@ -159,7 +163,6 @@
     <div id="timerDisplay">00:00:00</div>
     <textarea id="taskInput" placeholder="ここに集中する内容を入力... (任意)"></textarea>
     <button id="controlButton" class="focus">
-        <!-- 初期表示のボタンテキスト -->
         <span class="button-label-small">集中内容を入力して</span>
         <span class="button-label-large">集中スタート！</span>
     </button>
@@ -180,24 +183,47 @@
             </div>
         </div>
     </div>
+    <button id="resetButton">現在のタイマーをリセット</button>
+</div>
 
-    <button id="resetButton">リセット</button>
+<div class="task-summary-container">
+    <h4>タスク別 作業時間集計</h4>
+    <select id="taskSelector">
+        <option value="">タスクを選択してください</option>
+    </select>
+    <div id="taskTodayTotal" class="task-period-total"><strong>今日の合計:</strong> 00時間00分00秒</div>
+    <div id="taskWeekTotal" class="task-period-total"><strong>今週の合計:</strong> 00時間00分00秒</div>
+    <div id="taskMonthTotal" class="task-period-total"><strong>今月の合計:</strong> 00時間00分00秒</div>
 </div>
 
 <div class="usage-guide">
     <h4>タイマーの使い方</h4>
     <ul>
-        <li><strong>集中開始:</strong> 上のテキストエリアに集中する内容（例: 「ブログを書く」「資料作成」など、任意）を入力し、「集中スタート！」ボタンを押すと、集中時間の計測が始まります。入力した内容は、後で集中記録に表示されます。</li>
+        <li><strong>集中開始:</strong> 上のテキストエリアに集中する内容（例: 「ブログを書く」「資料作成」など、任意）を入力し、「集中スタート！」ボタンを押すと、集中時間の計測が始まります。入力した内容は、後で集中記録に表示され、タスク別集計のタスク名としても使用されますので、後で集計しやすいようにカテゴリー名（例：「仕事」「勉強」「読書」など）や具体的なプロジェクト名でタスクを記載するのが便利です。</li>
         <li><strong>休憩開始:</strong> 集中作業が終わった時や、一旦休憩する時は「休憩する」ボタンを押します。その時点までの集中時間が記録され、休憩時間の計測が自動的に始まります。</li>
         <li><strong>集中再開:</strong> 休憩を終えるときは「集中スタート！」ボタンを押します。上のテキストエリアに集中する内容を入力してから「集中スタート！」ボタンを押しましょう。休憩時間が記録され、再度集中時間の計測が始まります。</li>
         <li><strong>記録の確認:</strong> 「集中記録」「休憩記録」に各セッションの時間と、集中時には入力した内容、それぞれの開始・終了時刻が表示されます。</li>
         <li><strong>トータル時間:</strong> 各記録の上には、集中時間と休憩時間それぞれのトータル時間が表示されます。</li>
-        <li><strong>リセット:</strong> 「リセット」ボタンを押すと、全てのタイマー、記録、入力内容が初期状態に戻ります。</li>
-        <li><strong>注意点:</strong> このタイマーの記録は、お使いのブラウザ上に一時的に保存されるものです。ブラウザを閉じたり、ページを更新したりすると記録は消えてしまいますのでご注意ください。</li>
+        <li><strong>タスク別集計:</strong> 「タスク別 作業時間集計」セクションのドロップダウンから過去に入力したタスクを選択すると、そのタスクの「今日の合計」「今週の合計」「今月の合計」作業時間が表示されます。ドロップダウンのタスクは合計作業時間の多い順に並びます。</li>
+        <li><strong>現在のタイマーをリセット:</strong> 「現在のタイマーをリセット」ボタンを押すと、動作中のタイマー、画面上のラップ記録、入力内容が初期状態に戻ります（保存された過去の作業記録は消えません）。</li>
+        <li><strong>過去全ての作業記録を削除:</strong> 「記録の管理」セクションにある「過去全ての作業記録を削除する」ボタンを押すと、確認の後、ブラウザに保存されている全ての作業記録が完全に削除されます。この操作は元に戻せません。</li>
+        <li><strong>注意点:</strong> このタイマーの記録は、お使いのブラウザのローカルストレージという場所に保存されます。ブラウザを閉じたりページを更新したりしても記録は残ります。しかし、以下の操作を行うと記録が消えてしまう可能性がありますのでご注意ください。
+            <ul>
+                <li>ブラウザの設定から「キャッシュのクリア」「閲覧履歴の削除」などを行う際に、「Cookieと他のサイトデータ」やそれに類する項目を選択して削除した場合。（多くのブラウザで、ローカルストレージのデータはこの「他のサイトデータ」に含まれます。）</li>
+                <li>このページにある「過去全ての作業記録を削除する」ボタンを使用した場合。</li>
+                <li>その他、PCのクリーナーソフトなどを使用した場合。</li>
+            </ul>
+        </li>
     </ul>
 </div>
 
+<div class="data-management-container">
+    <h4>記録の管理</h4>
+    <button id="clearAllDataButton">過去全ての作業記録を削除する</button>
+</div>
+
 <script>
+    // (このコメントの下にJavaScriptコードが続きます)
     const bodyElement = document.body;
     const modeIndicator = document.getElementById('modeIndicator');
     const timerDisplay = document.getElementById('timerDisplay');
@@ -208,6 +234,14 @@
     const totalFocusTimeDisplay = document.getElementById('totalFocusTime');
     const breakLapsList = document.getElementById('breakLapsList');
     const totalBreakTimeDisplay = document.getElementById('totalBreakTime');
+
+    const taskSelector = document.getElementById('taskSelector');
+    const taskTodayTotalDisplay = document.getElementById('taskTodayTotal');
+    const taskWeekTotalDisplay = document.getElementById('taskWeekTotal');
+    const taskMonthTotalDisplay = document.getElementById('taskMonthTotal');
+    const clearAllDataButton = document.getElementById('clearAllDataButton');
+
+    const STORAGE_KEY = 'focusTimerRecords';
 
     let timerInterval = null;
     let currentSeconds = 0;
@@ -222,29 +256,76 @@
     let currentSessionStartTime = null;
     let currentTaskDescription = "";
 
-    // ボタンのテキストを更新するヘルパー関数
-    function updateButtonText(smallText, largeText, isBreakButton = false) {
-        controlButton.innerHTML = `<span class="button-label-small">${smallText}</span><span class="button-label-large">${largeText}</span>`;
-        if (isBreakButton) {
-            controlButton.className = 'break';
-        } else {
-            controlButton.className = 'focus';
+    // --- ローカルストレージ関連 ---
+    function saveRecord(record) {
+        const records = loadAllRecords();
+        records.push(record);
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+            console.log("Record saved:", record);
+        } catch (e) {
+            console.error("Failed to save record to localStorage:", e);
+            alert("記録の保存に失敗しました。ストレージの空き容量を確認してください。");
         }
     }
 
+    function loadAllRecords() {
+        try {
+            const recordsJson = localStorage.getItem(STORAGE_KEY);
+            return recordsJson ? JSON.parse(recordsJson) : [];
+        } catch (e) {
+            console.error("Failed to load records from localStorage:", e);
+            return []; // エラー時は空の配列を返す
+        }
+    }
 
+    function clearAllStoredData() {
+        if (confirm("本当に過去全ての作業記録を削除しますか？この操作は元に戻せません。")) {
+            try {
+                localStorage.removeItem(STORAGE_KEY);
+                alert("全ての作業記録が削除されました。");
+                initializeTaskSummary(); // 集計表示もリセット
+                populateTaskSelector(); // ドロップダウンも更新
+                console.log("All records cleared from localStorage.");
+            } catch (e) {
+                console.error("Failed to clear records from localStorage:", e);
+                alert("記録の削除に失敗しました。");
+            }
+        }
+    }
+
+    // --- 日付操作ヘルパー ---
+    function getStartOfDay(date) {
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }
+
+    function getStartOfWeek(date) { // 月曜始まり
+        const d = new Date(date);
+        const day = d.getDay(); // 0 (Sun) - 6 (Sat)
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // day is 0 (Sun), so -6, else +1
+        return new Date(d.setDate(diff));
+    }
+
+    function getStartOfMonth(date) {
+        const d = new Date(date);
+        d.setDate(1);
+        return getStartOfDay(d);
+    }
+
+
+    // --- 時間フォーマット関連 ---
     function formatTime(totalSeconds, formatType = 'timer') {
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
-
         if (formatType === 'japanese') {
             return String(hours).padStart(2, '0') + '時間' + String(minutes).padStart(2, '0') + '分' + String(seconds).padStart(2, '0') + '秒';
         } else {
             return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
         }
     }
-
     function formatHoursMinutes(dateObject) {
         if (!dateObject) return '';
         const hours = String(dateObject.getHours()).padStart(2, '0');
@@ -252,6 +333,15 @@
         return hours + ':' + minutes;
     }
 
+    // --- UI更新関連 ---
+    function updateButtonText(smallText, largeText, isBreakButton = false) {
+        controlButton.innerHTML = '<span class="button-label-small">' + smallText + '</span><span class="button-label-large">' + largeText + '</span>';
+        if (isBreakButton) {
+            controlButton.className = 'break';
+        } else {
+            controlButton.className = 'focus';
+        }
+    }
     function updateTimerDisplay() {
         if (isTimerActive && currentSessionStartTime) {
             const now = new Date();
@@ -259,16 +349,10 @@
         }
         timerDisplay.textContent = formatTime(currentSeconds);
     }
-
     function updateModeIndicatorAndBackground() {
         taskInput.disabled = isTimerActive && currentMode === 'focus';
-
         if (currentMode === 'focus') {
-            if (isTimerActive) {
-                modeIndicator.textContent = '集中モード';
-            } else {
-                modeIndicator.textContent = '集中準備OK';
-            }
+            modeIndicator.textContent = isTimerActive ? '集中モード' : '集中準備OK';
             bodyElement.classList.add('focus-mode-bg');
             bodyElement.classList.remove('break-mode-bg');
         } else if (currentMode === 'break') {
@@ -280,13 +364,11 @@
             bodyElement.classList.remove('focus-mode-bg', 'break-mode-bg');
         }
     }
-
     function addLapTime(mode, timeInSeconds, sessionStartTime, sessionEndTime, taskDesc) {
         const lapItem = document.createElement('li');
-        let lapNumber;
         const formattedDuration = formatTime(timeInSeconds, 'japanese');
-        const formattedStartTime = formatHoursMinutes(sessionStartTime);
-        const formattedEndTime = formatHoursMinutes(sessionEndTime);
+        const formattedStartTime = formatHoursMinutes(new Date(sessionStartTime)); // Dateオブジェクトに変換
+        const formattedEndTime = formatHoursMinutes(new Date(sessionEndTime));   // Dateオブジェクトに変換
         const timeRange = (formattedStartTime && formattedEndTime) ? '(' + formattedStartTime + '～' + formattedEndTime + ')' : '';
         let taskHtml = '';
 
@@ -301,26 +383,96 @@
 
         if (mode === 'focus') {
             focusLapCounter++;
-            lapNumber = focusLapCounter;
             lapItem.innerHTML = focusLapCounter + '回目 ' + formattedDuration + ' <span class="lap-duration">' + timeRange + '</span>' + taskHtml;
             focusLapsList.prepend(lapItem);
         } else {
             breakLapCounter++;
-            lapNumber = breakLapCounter;
             lapItem.innerHTML = breakLapCounter + '回目 ' + formattedDuration + ' <span class="lap-duration">' + timeRange + '</span>';
             breakLapsList.prepend(lapItem);
         }
     }
-
     function updateTotalTimeDisplay() {
         totalFocusTimeDisplay.textContent = 'トータル集中時間: ' + formatTime(totalFocusSeconds, 'japanese');
         totalBreakTimeDisplay.textContent = 'トータル休憩時間: ' + formatTime(totalBreakSeconds, 'japanese');
     }
 
+    // --- タスク別集計関連 ---
+    function populateTaskSelector() {
+        console.log("Populating task selector...");
+        const records = loadAllRecords();
+        const taskTotals = {}; // { "タスク名": 合計時間 }
+
+        records.forEach(record => {
+            if (record.mode === 'focus' && record.task) { // 集中モードでタスク名があるもののみ
+                taskTotals[record.task] = (taskTotals[record.task] || 0) + record.duration;
+            }
+        });
+
+        const sortedTasks = Object.entries(taskTotals)
+            .sort(([, a], [, b]) => b - a) // 合計時間の降順でソート
+            .map(([task]) => task);
+
+        taskSelector.innerHTML = '<option value="">タスクを選択してください</option>'; // 初期化
+        sortedTasks.forEach(task => {
+            const option = document.createElement('option');
+            option.value = task;
+            option.textContent = task;
+            taskSelector.appendChild(option);
+        });
+        console.log("Task selector populated with tasks:", sortedTasks);
+    }
+
+    function updateTaskSummary() {
+        const selectedTask = taskSelector.value;
+        console.log("Updating task summary for task:", selectedTask);
+        if (!selectedTask) {
+            taskTodayTotalDisplay.innerHTML = '<strong>今日の合計:</strong> 00時間00分00秒';
+            taskWeekTotalDisplay.innerHTML = '<strong>今週の合計:</strong> 00時間00分00秒';
+            taskMonthTotalDisplay.innerHTML = '<strong>今月の合計:</strong> 00時間00分00秒';
+            return;
+        }
+
+        const records = loadAllRecords();
+        const now = new Date();
+        const todayStart = getStartOfDay(now);
+        const weekStart = getStartOfWeek(getStartOfDay(now)); // 週の開始も0時0分0秒に
+        const monthStart = getStartOfMonth(getStartOfDay(now)); // 月の開始も0時0分0秒に
+
+        let todayDuration = 0;
+        let weekDuration = 0;
+        let monthDuration = 0;
+
+        records.forEach(record => {
+            if (record.mode === 'focus' && record.task === selectedTask) {
+                const recordDate = new Date(record.isoDate); // 保存されたISO文字列からDateオブジェクトを復元
+                if (recordDate >= todayStart) {
+                    todayDuration += record.duration;
+                }
+                if (recordDate >= weekStart) {
+                    weekDuration += record.duration;
+                }
+                if (recordDate >= monthStart) {
+                    monthDuration += record.duration;
+                }
+            }
+        });
+        console.log(`Summary for ${selectedTask} - Today: ${todayDuration}, Week: ${weekDuration}, Month: ${monthDuration}`);
+
+        taskTodayTotalDisplay.innerHTML = '<strong>今日の合計:</strong> ' + formatTime(todayDuration, 'japanese');
+        taskWeekTotalDisplay.innerHTML = '<strong>今週の合計:</strong> ' + formatTime(weekDuration, 'japanese');
+        taskMonthTotalDisplay.innerHTML = '<strong>今月の合計:</strong> ' + formatTime(monthDuration, 'japanese');
+    }
+
+    function initializeTaskSummary() {
+        populateTaskSelector();
+        updateTaskSummary(); // 初期表示（何も選択されていない状態）
+    }
+
+    // --- タイマーロジック ---
     function startMainTimerInterval() {
         if (timerInterval) clearInterval(timerInterval);
         isTimerActive = true;
-        updateTimerDisplay();
+        updateTimerDisplay(); // 開始時に0秒または計算値を表示
         timerInterval = setInterval(function() {
             updateTimerDisplay();
         }, 1000);
@@ -358,46 +510,67 @@
         updateModeIndicatorAndBackground();
         focusLapsList.innerHTML = '';
         breakLapsList.innerHTML = '';
-
-        updateButtonText('集中内容を入力して', '集中スタート！', false); // 初期ボタンテキスト設定
+        updateButtonText('集中内容を入力して', '集中スタート！', false);
         controlButton.disabled = false;
         taskInput.disabled = false;
+
+        initializeTaskSummary(); // タスク集計も初期化
     }
 
+    // --- イベントリスナー ---
     controlButton.addEventListener('click', function() {
+        const sessionEndTime = new Date(); // 常に現在の時刻を終了候補として保持
+
         if (currentMode === 'focus') {
             if (!isTimerActive) { // 「集中スタート！」ボタン (集中開始)
                 currentTaskDescription = taskInput.value.trim();
                 taskInput.disabled = true;
-                updateButtonText('', '休憩する', true); // ボタンテキストを「休憩する」に
-
+                updateButtonText('', '休憩する', true);
                 currentSeconds = 0;
                 currentSessionStartTime = new Date();
                 startMainTimerInterval();
             } else { // 「休憩する」ボタン (集中終了 -> 休憩開始)
                 const recordedTime = stopMainTimerIntervalAndGetDuration();
-                addLapTime('focus', recordedTime, currentSessionStartTime, new Date(), currentTaskDescription);
+                const record = {
+                    mode: 'focus',
+                    task: currentTaskDescription,
+                    duration: recordedTime,
+                    startTime: currentSessionStartTime.toISOString(), // ISO文字列で保存
+                    endTime: sessionEndTime.toISOString(),       // ISO文字列で保存
+                    isoDate: currentSessionStartTime.toISOString() // 集計用に日付もISOで
+                };
+                saveRecord(record);
+                addLapTime('focus', recordedTime, currentSessionStartTime, sessionEndTime, currentTaskDescription);
                 totalFocusSeconds += recordedTime;
+                populateTaskSelector(); // タスクリスト更新
+                updateTaskSummary();    // 集計更新
 
                 currentMode = 'break';
-                updateButtonText('集中内容を入力して', '集中スタート！', false); // ボタンテキストを「集中スタート！」に戻す
+                updateButtonText('集中内容を入力して', '集中スタート！', false);
                 taskInput.value = "";
                 taskInput.disabled = false;
-
                 currentSeconds = 0;
                 currentSessionStartTime = new Date();
-                startMainTimerInterval(); // 休憩タイマー開始
+                startMainTimerInterval();
             }
-        } else { // currentMode === 'break' (「集中スタート！」ボタンが押されたので休憩終了 -> 即座に集中再開)
+        } else { // currentMode === 'break' (「集中スタート！」ボタン -> 休憩終了 & 即集中開始)
             const recordedTime = stopMainTimerIntervalAndGetDuration();
-            addLapTime('break', recordedTime, currentSessionStartTime, new Date());
+            const record = {
+                mode: 'break',
+                duration: recordedTime,
+                startTime: currentSessionStartTime.toISOString(),
+                endTime: sessionEndTime.toISOString(),
+                isoDate: currentSessionStartTime.toISOString()
+            };
+            saveRecord(record);
+            addLapTime('break', recordedTime, currentSessionStartTime, sessionEndTime);
             totalBreakSeconds += recordedTime;
+            // 休憩記録後はタスクリストやサマリーの更新は不要（休憩にはタスク名がないため）
 
             currentMode = 'focus';
             currentTaskDescription = taskInput.value.trim();
             taskInput.disabled = true;
-            updateButtonText('', '休憩する', true); // ボタンテキストを「休憩する」に
-
+            updateButtonText('', '休憩する', true);
             currentSeconds = 0;
             currentSessionStartTime = new Date();
             startMainTimerInterval();
@@ -407,10 +580,43 @@
     });
 
     resetButton.addEventListener('click', function() {
-        initializeState();
+        // タイマーの状態と画面上のラップのみリセット、ローカルストレージはそのまま
+        if (timerInterval) clearInterval(timerInterval);
+        isTimerActive = false;
+        timerInterval = null;
+        currentSeconds = 0;
+        // currentMode はリセットしない（もし集中中や休憩中ならそのモードの準備状態に戻る）
+        // totalFocusSeconds = 0; // トータル時間はリセットしない
+        // totalBreakSeconds = 0; // トータル時間はリセットしない
+        focusLapCounter = 0;
+        breakLapCounter = 0;
+        // currentSessionStartTime = null; // リセット時は次の開始待ちなのでnullで良い
+        currentTaskDescription = ""; // 入力中のタスクはクリア
+        taskInput.value = "";
+
+        updateTimerDisplay();
+        // updateTotalTimeDisplay(); // トータル時間はリセットしないので呼ばない
+        updateModeIndicatorAndBackground();
+        focusLapsList.innerHTML = ''; // 画面上のラップはクリア
+        breakLapsList.innerHTML = ''; // 画面上のラップはクリア
+
+        if (currentMode === 'break') { // もし休憩モードでリセットしたら集中準備OK状態に
+            currentMode = 'focus';
+            updateButtonText('集中内容を入力して', '集中スタート！', false);
+            taskInput.disabled = false;
+        } else { // 集中モード（または初期状態）でリセット
+             updateButtonText('集中内容を入力して', '集中スタート！', false);
+             taskInput.disabled = false;
+        }
+        controlButton.disabled = false;
     });
 
-    initializeState();
+    clearAllDataButton.addEventListener('click', clearAllStoredData);
+    taskSelector.addEventListener('change', updateTaskSummary);
+
+    // --- 初期化 ---
+    initializeState(); // タイマーの基本的な状態を初期化
+    // initializeTaskSummary(); // ローカルストレージを読み込みタスク集計関連を初期化（initializeState内で呼ばれる）
 </script>
 
 </body>
