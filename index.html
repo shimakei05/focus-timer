@@ -63,28 +63,10 @@
     .task-summary-container h4 { margin-top: 0; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
     #taskSelector { width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
     .task-period-total { text-align: left; font-size: 0.95rem; margin-bottom: 2px; padding-left: 5px; }
-    .task-period-total strong { display: inline-block; width: 110px; /* この幅に合わせて内訳のインデントを調整 */ }
-    .task-period-details ul {
-        list-style-type: none;
-        padding-left: 0; /* ul自体のパディングはリセット */
-        margin-top: 3px;
-        margin-bottom: 10px;
-        text-align: left;
-    }
-    .task-period-details li {
-        font-size: 0.85em;
-        color: #666;
-        margin-bottom: 2px;
-        padding-left: 115px; /* strongの幅 + 少しの余白 (110px + 5px) */
-        position: relative; /* ::before の基準 */
-    }
-    .task-period-details li::before {
-        content: "・";
-        position: absolute;
-        left: 105px; /* strongの幅より少し手前 (110px - 5px) または調整 */
-        /* または left: calc(110px - 1em); のようにemで調整も可 */
-    }
-
+    .task-period-total strong { display: inline-block; width: 110px; }
+    .task-period-details ul { list-style-type: none; padding-left: 0; margin-top: 3px; margin-bottom: 10px; text-align: left; }
+    .task-period-details li { font-size: 0.85em; color: #666; margin-bottom: 2px; padding-left: 115px; position: relative; }
+    .task-period-details li::before { content: "・"; position: absolute; left: 105px; }
 
     .usage-guide, .data-management-container { text-align: left; font-size: 0.9rem; line-height: 1.6; color: #555; }
     .usage-guide h4, .data-management-container h4 { margin-top: 0; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px; }
@@ -97,18 +79,31 @@
         .timer-container, .task-summary-container, .usage-guide, .data-management-container { margin-bottom: 20px; padding: 15px; }
         #modeIndicator { font-size: 1.5rem; }
         #timerDisplay { font-size: 3rem; }
-        #controlButton { padding: 8px 15px; }
-        #resetButton, #clearAllDataButton { font-size: 1.1rem; }
-        .button-label-large { font-size: 1.2em; }
+
+        #controlButton {
+            padding: 18px 15px; /* 上下パディングを増やして高さを出す */
+        }
+        #resetButton, #clearAllDataButton {
+            font-size: 1.2rem; /* 他のボタンも少し大きく */
+            padding: 15px;     /* 他のボタンのパディングも調整 */
+        }
+        .button-label-small {
+            font-size: 0.9em; /* スマホ用に調整 (基準フォントサイズに対する割合) */
+            margin-bottom: 3px; /* 少し間隔をあける */
+        }
+        .button-label-large {
+            font-size: 1.6em; /* スマホ用に調整 (基準フォントサイズに対する割合) */
+        }
+
         .columns { flex-direction: column; }
         #taskInput { min-height: 40px; }
         .total-time { font-size: 0.9rem; }
         .task-summary-container h4 { margin-bottom: 10px;}
         #taskSelector { font-size: 0.85rem; margin-bottom: 10px; }
         .task-period-total { font-size: 0.9rem; }
-        .task-period-total strong { width: 100px; } /* スマホ時のラベル幅 */
-        .task-period-details li { padding-left: 105px; /* スマホ時のstrongの幅 + 少しの余白 */ }
-        .task-period-details li::before { left: 95px; /* スマホ時のstrongの幅より少し手前 */ }
+        .task-period-total strong { width: 100px; }
+        .task-period-details li { padding-left: 105px; }
+        .task-period-details li::before { left: 95px; }
         .usage-guide, .data-management-container { font-size: 0.85rem; padding: 15px; }
         .usage-guide ul { padding-left: 15px; }
     }
@@ -183,6 +178,8 @@
 </div>
 
 <script>
+    // (JavaScriptコードは前回のメッセージのものと同じです。変更はありません。)
+    // ... (前回のメッセージで提示したJavaScriptコード全体をここに貼り付けてください) ...
     const bodyElement = document.body;
     const modeIndicator = document.getElementById('modeIndicator');
     const timerDisplay = document.getElementById('timerDisplay');
@@ -420,18 +417,17 @@
         taskMonthTotalDisplay.innerHTML = '<strong>今月の合計:</strong> ' + formatTime(monthDuration, 'japanese');
 
         if (selectedValue !== ALL_TASKS_VALUE) {
-            if (Object.keys(weekDailyTotals).length > 0) { // 内訳がある場合のみulを作成
+            if (Object.keys(weekDailyTotals).length > 0) {
                 const ulWeek = document.createElement('ul');
                 const sortedWeekDates = Object.keys(weekDailyTotals).sort((a,b) => new Date(now.getFullYear() + '/' + a) - new Date(now.getFullYear() + '/' + b) );
                 sortedWeekDates.forEach(dateKey => {
                     const li = document.createElement('li');
-                    // li要素に直接 ::before のスタイルが効くように、textContentには「・」を含めない
                     li.textContent = `${dateKey}　${formatTime(weekDailyTotals[dateKey], 'japanese')}`;
                     ulWeek.appendChild(li);
                 });
                 taskWeekDetailsDisplay.appendChild(ulWeek);
             }
-            if (Object.keys(monthDailyTotals).length > 0) { // 内訳がある場合のみulを作成
+            if (Object.keys(monthDailyTotals).length > 0) {
                 const ulMonth = document.createElement('ul');
                 const sortedMonthDates = Object.keys(monthDailyTotals).sort((a,b) => new Date(now.getFullYear() + '/' + a) - new Date(now.getFullYear() + '/' + b) );
                 sortedMonthDates.forEach(dateKey => {
