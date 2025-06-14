@@ -187,7 +187,7 @@
     const taskMonthTotalDisplay = document.getElementById('taskMonthTotal');
     const taskMonthDetailsDisplay = document.getElementById('taskMonthDetails');
     const clearAllDataButton = document.getElementById('clearAllDataButton');
-    const downloadCsvButton = document.getElementById('downloadCsvButton'); // CSVダウンロードボタン
+    const downloadCsvButton = document.getElementById('downloadCsvButton');
 
     const STORAGE_KEY = 'focusTimerRecords';
     const ALL_TASKS_VALUE = "all_tasks_summary";
@@ -204,7 +204,7 @@
 
     let currentSessionStartTime = null;
     let currentTaskDescription = "";
-    let currentSummaryData = {}; // CSVエクスポート用に集計データを保持
+    // let currentSummaryData = {}; // generateCsvDataで直接計算するため不要に
 
     function saveRecord(record) {
         const records = loadAllRecords();
@@ -359,15 +359,12 @@
             option.textContent = task;
             taskSelector.appendChild(option);
         });
-        taskSelector.value = ALL_TASKS_VALUE;
+        if (taskSelector.options.length > 0) {
+             taskSelector.value = ALL_TASKS_VALUE; // 初期選択
+        }
     }
 
-    function updateTaskSummary() {
-        const selectedValue = taskSelector.value;
-        taskWeekDetailsDisplay.innerHTML = '';
-        taskMonthDetailsDisplay.innerHTML = '';
-
-        const records = loadAllRecords();
+    function calculateSummaryForTask(taskNameOrAll, records) {
         const now = new Date();
         const todayStart = getStartOfDay(now);
         const weekStart = getStartOfWeek(now);
@@ -376,11 +373,11 @@
         let todayDuration = 0;
         let weekDuration = 0;
         let monthDuration = 0;
-        const weekDailyTotals = {}; // { "M/D": seconds }
-        const monthDailyTotals = {};// { "M/D": seconds }
+        const weekDailyTotals = {};
+        const monthDailyTotals = {};
 
         records.forEach(record => {
-            const isTargetTask = (selectedValue === ALL_TASKS_VALUE || record.task === selectedValue);
+            const isTargetTask = (taskNameOrAll === ALL_TASKS_VALUE || record.task === taskNameOrAll);
             if (record.mode === 'focus' && isTargetTask) {
                 const recordDate = new Date(record.isoDate);
                 const recordDateKey = (recordDate.getMonth() + 1) + '/' + recordDate.getDate();
@@ -390,48 +387,56 @@
                 }
                 if (recordDate >= weekStart) {
                     weekDuration += record.duration;
-                    if (selectedValue !== ALL_TASKS_VALUE) {
+                    // 日別内訳は個別タスク選択時のみ集計（CSVエクスポートでは全タスク合計時も出す）
+                    // if (taskNameOrAll !== ALL_TASKS_VALUE) {
                         weekDailyTotals[recordDateKey] = (weekDailyTotals[recordDateKey] || 0) + record.duration;
-                    }
+                    // }
                 }
                 if (recordDate >= monthStart) {
                     monthDuration += record.duration;
-                    if (selectedValue !== ALL_TASKS_VALUE) {
+                    // if (taskNameOrAll !== ALL_TASKS_VALUE) {
                         monthDailyTotals[recordDateKey] = (monthDailyTotals[recordDateKey] || 0) + record.duration;
-                    }
+                    // }
                 }
             }
         });
-
-        taskTodayTotalDisplay.innerHTML = '<strong>今日の合計:</strong> ' + formatTime(todayDuration, 'japanese');
-        taskWeekTotalDisplay.innerHTML = '<strong>今週の合計:</strong> ' + formatTime(weekDuration, 'japanese');
-        taskMonthTotalDisplay.innerHTML = '<strong>今月の合計:</strong> ' + formatTime(monthDuration, 'japanese');
-
-        // CSVエクスポート用にデータを保持
-        currentSummaryData = {
-            selectedValue,
+        return {
             today: { total: todayDuration },
             week: { total: weekDuration, details: weekDailyTotals },
             month: { total: monthDuration, details: monthDailyTotals }
         };
+    }
 
+
+    function updateTaskSummary() {
+        const selectedValue = taskSelector.value;
+        taskWeekDetailsDisplay.innerHTML = '';
+        taskMonthDetailsDisplay.innerHTML = '';
+
+        const summary = calculateSummaryForTask(selectedValue, loadAllRecords());
+
+        taskTodayTotalDisplay.innerHTML = '<strong>今日の合計:</strong> ' + formatTime(summary.today.total, 'japanese');
+        taskWeekTotalDisplay.innerHTML = '<strong>今週の合計:</strong> ' + formatTime(summary.week.total, 'japanese');
+        taskMonthTotalDisplay.innerHTML = '<strong>今月の合計:</strong> ' + formatTime(summary.month.total, 'japanese');
+
+        const now = new Date(); // ソート用
         if (selectedValue !== ALL_TASKS_VALUE) {
-            if (Object.keys(weekDailyTotals).length > 0) {
+            if (Object.keys(summary.week.details).length > 0) {
                 const ulWeek = document.createElement('ul');
-                const sortedWeekDates = Object.keys(weekDailyTotals).sort((a,b) => new Date(now.getFullYear() + '/' + a) - new Date(now.getFullYear() + '/' + b) );
+                const sortedWeekDates = Object.keys(summary.week.details).sort((a,b) => new Date(now.getFullYear() + '/' + a) - new Date(now.getFullYear() + '/' + b) );
                 sortedWeekDates.forEach(dateKey => {
                     const li = document.createElement('li');
-                    li.textContent = `${dateKey}　${formatTime(weekDailyTotals[dateKey], 'japanese')}`;
+                    li.textContent = `${dateKey}　${formatTime(summary.week.details[dateKey], 'japanese')}`;
                     ulWeek.appendChild(li);
                 });
                 taskWeekDetailsDisplay.appendChild(ulWeek);
             }
-            if (Object.keys(monthDailyTotals).length > 0) {
+            if (Object.keys(summary.month.details).length > 0) {
                 const ulMonth = document.createElement('ul');
-                const sortedMonthDates = Object.keys(monthDailyTotals).sort((a,b) => new Date(now.getFullYear() + '/' + a) - new Date(now.getFullYear() + '/' + b) );
+                const sortedMonthDates = Object.keys(summary.month.details).sort((a,b) => new Date(now.getFullYear() + '/' + a) - new Date(now.getFullYear() + '/' + b) );
                 sortedMonthDates.forEach(dateKey => {
                     const li = document.createElement('li');
-                    li.textContent = `${dateKey}　${formatTime(monthDailyTotals[dateKey], 'japanese')}`;
+                    li.textContent = `${dateKey}　${formatTime(summary.month.details[dateKey], 'japanese')}`;
                     ulMonth.appendChild(li);
                 });
                 taskMonthDetailsDisplay.appendChild(ulMonth);
@@ -440,58 +445,80 @@
     }
 
     function generateCsvData() {
-        const { selectedValue, today, week, month } = currentSummaryData;
-        const selectedTaskName = (selectedValue === ALL_TASKS_VALUE) ? "全タスク合計" : selectedValue;
         let csvRows = [];
         const now = new Date();
+        csvRows.push(["集計対象タスク", "期間種別", "日付", "作業時間"]); // ヘッダー
 
-        // ヘッダー
-        csvRows.push(["集計対象", "期間種別", "日付", "作業時間"]);
+        const allRecords = loadAllRecords();
 
-        // 今日の合計
-        csvRows.push([selectedTaskName, "今日の合計", "", formatTime(today.total, 'japanese')]);
-
-        // 今週の合計と内訳
-        csvRows.push([selectedTaskName, "今週の合計", "", formatTime(week.total, 'japanese')]);
-        if (selectedValue !== ALL_TASKS_VALUE && Object.keys(week.details).length > 0) {
-            const sortedWeekDates = Object.keys(week.details).sort((a,b) => new Date(now.getFullYear() + '/' + a) - new Date(now.getFullYear() + '/' + b) );
+        // 1. 全タスク合計
+        const allTasksSummary = calculateSummaryForTask(ALL_TASKS_VALUE, allRecords);
+        csvRows.push(["全タスク合計", "今日の合計", "", formatTime(allTasksSummary.today.total, 'japanese')]);
+        csvRows.push(["全タスク合計", "今週の合計", "", formatTime(allTasksSummary.week.total, 'japanese')]);
+        // 全タスク合計の場合も日別内訳を出す (週)
+        if (Object.keys(allTasksSummary.week.details).length > 0) {
+            const sortedWeekDates = Object.keys(allTasksSummary.week.details).sort((a,b) => new Date(now.getFullYear() + '/' + a) - new Date(now.getFullYear() + '/' + b) );
             sortedWeekDates.forEach(dateKey => {
-                csvRows.push([selectedTaskName, "今週の内訳", dateKey, formatTime(week.details[dateKey], 'japanese')]);
+                csvRows.push(["全タスク合計", "今週の日別内訳", dateKey, formatTime(allTasksSummary.week.details[dateKey], 'japanese')]);
             });
         }
-
-        // 今月の合計と内訳
-        csvRows.push([selectedTaskName, "今月の合計", "", formatTime(month.total, 'japanese')]);
-        if (selectedValue !== ALL_TASKS_VALUE && Object.keys(month.details).length > 0) {
-            const sortedMonthDates = Object.keys(month.details).sort((a,b) => new Date(now.getFullYear() + '/' + a) - new Date(now.getFullYear() + '/' + b) );
+        csvRows.push(["全タスク合計", "今月の合計", "", formatTime(allTasksSummary.month.total, 'japanese')]);
+        // 全タスク合計の場合も日別内訳を出す (月)
+        if (Object.keys(allTasksSummary.month.details).length > 0) {
+            const sortedMonthDates = Object.keys(allTasksSummary.month.details).sort((a,b) => new Date(now.getFullYear() + '/' + a) - new Date(now.getFullYear() + '/' + b) );
             sortedMonthDates.forEach(dateKey => {
-                csvRows.push([selectedTaskName, "今月の内訳", dateKey, formatTime(month.details[dateKey], 'japanese')]);
+                csvRows.push(["全タスク合計", "今月の日別内訳", dateKey, formatTime(allTasksSummary.month.details[dateKey], 'japanese')]);
             });
         }
-        return csvRows.map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(",")).join("\n");
+        csvRows.push([]); // 区切り行
+
+        // 2. 個別タスクごと
+        const uniqueTasks = [...new Set(allRecords.filter(r => r.mode === 'focus' && r.task).map(r => r.task))];
+        uniqueTasks.forEach(taskName => {
+            const taskSummary = calculateSummaryForTask(taskName, allRecords);
+            csvRows.push([taskName, "今日の合計", "", formatTime(taskSummary.today.total, 'japanese')]);
+            csvRows.push([taskName, "今週の合計", "", formatTime(taskSummary.week.total, 'japanese')]);
+            if (Object.keys(taskSummary.week.details).length > 0) {
+                 const sortedWeekDates = Object.keys(taskSummary.week.details).sort((a,b) => new Date(now.getFullYear() + '/' + a) - new Date(now.getFullYear() + '/' + b) );
+                sortedWeekDates.forEach(dateKey => {
+                    csvRows.push([taskName, "今週の日別内訳", dateKey, formatTime(taskSummary.week.details[dateKey], 'japanese')]);
+                });
+            }
+            csvRows.push([taskName, "今月の合計", "", formatTime(taskSummary.month.total, 'japanese')]);
+            if (Object.keys(taskSummary.month.details).length > 0) {
+                const sortedMonthDates = Object.keys(taskSummary.month.details).sort((a,b) => new Date(now.getFullYear() + '/' + a) - new Date(now.getFullYear() + '/' + b) );
+                sortedMonthDates.forEach(dateKey => {
+                    csvRows.push([taskName, "今月の日別内訳", dateKey, formatTime(taskSummary.month.details[dateKey], 'japanese')]);
+                });
+            }
+            csvRows.push([]); // タスクごとの区切り行
+        });
+
+        return csvRows.map(row => row.map(field => `"${String(field === undefined || field === null ? '' : field).replace(/"/g, '""')}"`).join(",")).join("\n");
     }
 
     function downloadCsv() {
+        console.log("downloadCsv function called"); // デバッグログ
         const csvData = generateCsvData();
-        if (!csvData || csvData.split("\n").length <= 1) { // ヘッダー行のみの場合はデータなしとみなす
+        if (!csvData || csvData.split("\n").length <= 1) {
             alert("ダウンロードするデータがありません。");
             return;
         }
 
-        const bom = new Uint8Array([0xEF, 0xBB, 0xBF]); // UTF-8 BOM
+        const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
         const blob = new Blob([bom, csvData], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
 
         link.setAttribute("href", url);
-        const selectedTaskFilePart = (taskSelector.value === ALL_TASKS_VALUE) ? "all_tasks" : taskSelector.value.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-        const fileName = `focus_timer_summary_${selectedTaskFilePart}_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.csv`;
+        const fileName = `focus_timer_all_summary_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.csv`;
         link.setAttribute("download", fileName);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+        console.log("CSV download initiated."); // デバッグログ
     }
 
 
@@ -531,12 +558,7 @@
         taskInput.value = "";
 
         updateTimerDisplay();
-        // updateTotalTimeDisplay(); // InitializeStateでは累計時間はlocalStorageから再計算しない
-        updateModeIndicatorAndBackground();
-        focusLapsList.innerHTML = '';
-        breakLapsList.innerHTML = '';
-
-        // トータル時間も初期化時にローカルストレージから再計算
+        // トータル時間はlocalStorageから再計算
         const allRecords = loadAllRecords();
         totalFocusSeconds = 0;
         totalBreakSeconds = 0;
@@ -545,7 +567,9 @@
             if (record.mode === 'break') totalBreakSeconds += record.duration;
         });
         updateTotalTimeDisplay();
-
+        updateModeIndicatorAndBackground();
+        focusLapsList.innerHTML = '';
+        breakLapsList.innerHTML = '';
 
         const todayStart = getStartOfDay(new Date());
         let todaysFocusCountForDisplay = 0;
@@ -637,12 +661,15 @@
         isTimerActive = false;
         timerInterval = null;
         currentSeconds = 0;
-        // currentTaskDescription = taskInput.value; // initializeStateでクリアされるので不要
-        initializeState(); // 表示と状態を完全に初期化（ローカルストレージは残る）
+        initializeState();
     });
 
     clearAllDataButton.addEventListener('click', clearAllStoredData);
     taskSelector.addEventListener('change', updateTaskSummary);
+    downloadCsvButton.addEventListener('click', function() { // 通常の関数に変更
+        console.log("Download CSV button clicked!");
+        downloadCsv();
+    });
 
     initializeState();
 </script>
