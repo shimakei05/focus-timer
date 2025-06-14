@@ -51,10 +51,15 @@
     #downloadCsvButton { background-color: #16a085; color: white; margin-top: 15px; }
     #downloadCsvButton:hover { background-color: #117a65; }
 
-
     .laps-section { margin-top: 20px; text-align: left; width: 100%; }
     .laps-section h3 { margin-bottom: 5px; color: #7f8c8d; border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; }
-    .total-time { margin-bottom: 10px; font-weight: bold; font-size: 1.0rem; }
+    .total-time { /* このクラスは新しいID specificなものに変更 */
+        margin-bottom: 5px; /* 少し詰める */
+        font-weight: bold;
+        font-size: 0.9rem; /* 少し小さく */
+        text-align: left; /* 左寄せにする */
+        padding-left: 5px; /* 少しインデント */
+    }
     .laps-list { list-style-type: none; padding: 0; max-height: 150px; overflow-y: auto; background-color: #f9f9f9; border: 1px solid #eee; border-radius: 3px; }
     .laps-list li { padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; line-height: 1.4; }
     .laps-list li:last-child { border-bottom: none; }
@@ -87,12 +92,12 @@
         .button-label-large { font-size: 1.2em; }
         .columns { flex-direction: column; }
         #taskInput { min-height: 40px; }
-        .total-time { font-size: 0.9rem; }
+        .total-time { font-size: 0.85rem; } /* 少し小さく */
         .task-summary-container h4 { margin-bottom: 10px;}
         #taskSelector { font-size: 0.85rem; margin-bottom: 10px; }
         .task-period-total { font-size: 0.9rem; }
         .task-period-total strong { width: 100px; }
-        .task-period-details li { padding-left: 105px; }
+        .task-period-details li { padding-left: 105px; font-size: 0.8em; }
         .task-period-details li::before { left: 95px; }
         .usage-guide, .data-management-container { font-size: 0.85rem; padding: 15px; }
         .usage-guide ul { padding-left: 15px; }
@@ -114,14 +119,16 @@
         <div class="column">
             <div class="laps-section">
                 <h3>集中記録</h3>
-                <div id="totalFocusTime" class="total-time">トータル集中時間: 00時間00分00秒</div>
+                <div id="todayTotalFocusTime" class="total-time">今日の合計: 00時間00分00秒</div>
+                <div id="allTimeTotalFocusTime" class="total-time">全期間累計: 00時間00分00秒</div>
                 <ul id="focusLapsList" class="laps-list"></ul>
             </div>
         </div>
         <div class="column">
             <div class="laps-section">
                 <h3>休憩記録</h3>
-                <div id="totalBreakTime" class="total-time">トータル休憩時間: 00時間00分00秒</div>
+                <div id="todayTotalBreakTime" class="total-time">今日の合計: 00時間00分00秒</div>
+                <div id="allTimeTotalBreakTime" class="total-time">全期間累計: 00時間00分00秒</div>
                 <ul id="breakLapsList" class="laps-list"></ul>
             </div>
         </div>
@@ -139,7 +146,7 @@
     <div id="taskWeekDetails" class="task-period-details"></div>
     <div id="taskMonthTotal" class="task-period-total"><strong>今月の合計:</strong> 00時間00分00秒</div>
     <div id="taskMonthDetails" class="task-period-details"></div>
-    <button id="downloadCsvButton">集計をCSVでダウンロード</button>
+    <button id="downloadCsvButton">表示中の集計をCSVでダウンロード</button>
 </div>
 
 <div class="usage-guide">
@@ -148,11 +155,11 @@
         <li><strong>集中開始:</strong> 上のテキストエリアに集中する内容（例: 「ブログを書く」「資料作成」など、任意）を入力し、「集中スタート！」ボタンを押すと、集中時間の計測が始まります。入力した内容は、後で集中記録に表示され、タスク別集計のタスク名としても使用されますので、後で集計しやすいようにカテゴリー名（例：「仕事」「勉強」「読書」など）や具体的なプロジェクト名でタスクを記載するのが便利です。</li>
         <li><strong>休憩開始:</strong> 集中作業が終わった時や、一旦休憩する時は「休憩する」ボタンを押します。その時点までの集中時間が記録され、休憩時間の計測が自動的に始まります。</li>
         <li><strong>集中再開:</strong> 休憩を終えるときは「集中スタート！」ボタンを押します。上のテキストエリアに集中する内容を入力してから「集中スタート！」ボタンを押しましょう。休憩時間が記録され、再度集中時間の計測が始まります。</li>
-        <li><strong>記録の確認:</strong> 「集中記録」「休憩記録」に各セッションの時間と、集中時には入力した内容、それぞれの開始・終了時刻が表示されます。</li>
-        <li><strong>トータル時間:</strong> 各記録の上には、集中時間と休憩時間それぞれのトータル時間が表示されます。</li>
+        <li><strong>記録の確認:</strong> 「集中記録」「休憩記録」に各セッションの時間と、集中時には入力した内容、それぞれの開始・終了時刻が表示されます。これらはその日の記録のみ表示され、日付が変わるとクリアされます（データ自体は残ります）。</li>
+        <li><strong>今日の合計 / 全期間累計:</strong> 各記録の上には、「今日の合計」とそのタイマーを使い始めてからの「全期間累計」の時間が表示されます。「今日の合計」は日付が変わるとリセットされます。</li>
         <li><strong>タスク別集計:</strong> 「タスク別 作業時間集計」セクションのドロップダウンから「合計の作業時間」または特定のタスクを選択すると、そのタスク（または全タスク）の「今日の合計」「今週の合計」「今月の合計」作業時間が表示されます。ドロップダウンのタスクは合計作業時間の多い順に並びます。特定のタスクを選択した場合のみ、「今週の合計」「今月の合計」の下に日ごとの作業時間内訳が表示されます。</li>
-        <li><strong>現在のタイマーをリセット:</strong> 「現在のタイマーをリセット」ボタンを押すと、動作中のタイマー、現在進行している作業内容がリセットされます（保存された過去の作業記録は消えません）。</li>
-        <li><strong>過去全ての作業記録を削除:</strong> 「記録の管理」セクションにある「過去全ての作業記録を削除する」ボタンを押すと、確認の後、ブラウザに保存されている全ての作業記録が完全に削除されます。この操作は元に戻せません。</li>
+        <li><strong>現在のタイマーをリセット:</strong> 「現在のタイマーをリセット」ボタンを押すと、動作中のタイマー、現在進行している作業内容、画面上のラップ記録がリセットされます（保存された過去の作業記録や累計時間は消えません）。</li>
+        <li><strong>過去全ての作業記録を削除:</strong> 「記録の管理」セクションにある「過去全ての作業記録を削除する」ボタンを押すと、確認の後、ブラウザに保存されている全ての作業記録が完全に削除されます。この操作は元に戻せません。（全期間累計なども0になります）</li>
         <li><strong>注意点:</strong> このタイマーの記録は、お使いのブラウザのローカルストレージという場所に保存されます。ブラウザを閉じたりページを更新したりしても記録は残ります。しかし、以下の操作を行うと記録が消えてしまう可能性がありますのでご注意ください。
             <ul>
                 <li>ブラウザの設定から「キャッシュのクリア」「閲覧履歴の削除」などを行う際に、「Cookieと他のサイトデータ」やそれに類する項目を選択して削除した場合。（多くのブラウザで、ローカルストレージのデータはこの「他のサイトデータ」に含まれます。）</li>
@@ -176,9 +183,14 @@
     const controlButton = document.getElementById('controlButton');
     const resetButton = document.getElementById('resetButton');
     const focusLapsList = document.getElementById('focusLapsList');
-    const totalFocusTimeDisplay = document.getElementById('totalFocusTime');
+    // 新しいIDに対応
+    const todayTotalFocusTimeDisplay = document.getElementById('todayTotalFocusTime');
+    const allTimeTotalFocusTimeDisplay = document.getElementById('allTimeTotalFocusTime');
+    const todayTotalBreakTimeDisplay = document.getElementById('todayTotalBreakTime');
+    const allTimeTotalBreakTimeDisplay = document.getElementById('allTimeTotalBreakTime');
+
     const breakLapsList = document.getElementById('breakLapsList');
-    const totalBreakTimeDisplay = document.getElementById('totalBreakTime');
+    // const totalBreakTimeDisplay = document.getElementById('totalBreakTime'); // 古いIDは削除
 
     const taskSelector = document.getElementById('taskSelector');
     const taskTodayTotalDisplay = document.getElementById('taskTodayTotal');
@@ -197,14 +209,15 @@
     let currentMode = 'focus';
     let isTimerActive = false;
 
-    let totalFocusSeconds = 0;
-    let totalBreakSeconds = 0;
+    // 全期間累計用のグローバル変数
+    let allTimeTotalFocusSeconds = 0;
+    let allTimeTotalBreakSeconds = 0;
+
     let focusLapCounter = 0;
     let breakLapCounter = 0;
 
     let currentSessionStartTime = null;
     let currentTaskDescription = "";
-    // let currentSummaryData = {}; // generateCsvDataで直接計算するため不要に
 
     function saveRecord(record) {
         const records = loadAllRecords();
@@ -232,7 +245,7 @@
             try {
                 localStorage.removeItem(STORAGE_KEY);
                 alert("全ての作業記録が削除されました。");
-                initializeState();
+                initializeState(); // 全ての状態をリセットして再描画
             } catch (e) {
                 console.error("Failed to clear records from localStorage:", e);
                 alert("記録の削除に失敗しました。");
@@ -332,9 +345,34 @@
         }
     }
 
-    function updateTotalTimeDisplay() {
-        totalFocusTimeDisplay.textContent = 'トータル集中時間: ' + formatTime(totalFocusSeconds, 'japanese');
-        totalBreakTimeDisplay.textContent = 'トータル休憩時間: ' + formatTime(totalBreakSeconds, 'japanese');
+    function updateTotalTimeDisplays() { // 関数名を複数形に変更
+        // 全期間累計の計算と表示
+        const allRecords = loadAllRecords();
+        allTimeTotalFocusSeconds = 0; // グローバル変数を更新
+        allTimeTotalBreakSeconds = 0; // グローバル変数を更新
+        allRecords.forEach(record => {
+            if (record.mode === 'focus') allTimeTotalFocusSeconds += record.duration;
+            if (record.mode === 'break') allTimeTotalBreakSeconds += record.duration;
+        });
+        allTimeTotalFocusTimeDisplay.textContent = '全期間累計: ' + formatTime(allTimeTotalFocusSeconds, 'japanese');
+        allTimeTotalBreakTimeDisplay.textContent = '全期間累計: ' + formatTime(allTimeTotalBreakSeconds, 'japanese');
+
+        // 今日の合計の計算と表示
+        const todayStart = getStartOfDay(new Date());
+        let todaysFocusDuration = 0;
+        let todaysBreakDuration = 0;
+        allRecords.forEach(record => {
+            const recordDate = new Date(record.isoDate);
+            if (recordDate >= todayStart) {
+                if (record.mode === 'focus') {
+                    todaysFocusDuration += record.duration;
+                } else if (record.mode === 'break') {
+                    todaysBreakDuration += record.duration;
+                }
+            }
+        });
+        todayTotalFocusTimeDisplay.textContent = '今日の合計: ' + formatTime(todaysFocusDuration, 'japanese');
+        todayTotalBreakTimeDisplay.textContent = '今日の合計: ' + formatTime(todaysBreakDuration, 'japanese');
     }
 
     function populateTaskSelector() {
@@ -346,13 +384,11 @@
             }
         });
         const sortedTasks = Object.entries(taskTotals).sort(([, a], [, b]) => b - a).map(([task]) => task);
-
         taskSelector.innerHTML = '';
         const allTasksOption = document.createElement('option');
         allTasksOption.value = ALL_TASKS_VALUE;
         allTasksOption.textContent = "合計の作業時間";
         taskSelector.appendChild(allTasksOption);
-
         sortedTasks.forEach(task => {
             const option = document.createElement('option');
             option.value = task;
@@ -360,7 +396,7 @@
             taskSelector.appendChild(option);
         });
         if (taskSelector.options.length > 0) {
-             taskSelector.value = ALL_TASKS_VALUE; // 初期選択
+             taskSelector.value = ALL_TASKS_VALUE;
         }
     }
 
@@ -369,34 +405,24 @@
         const todayStart = getStartOfDay(now);
         const weekStart = getStartOfWeek(now);
         const monthStart = getStartOfMonth(now);
-
         let todayDuration = 0;
         let weekDuration = 0;
         let monthDuration = 0;
         const weekDailyTotals = {};
         const monthDailyTotals = {};
-
         records.forEach(record => {
             const isTargetTask = (taskNameOrAll === ALL_TASKS_VALUE || record.task === taskNameOrAll);
             if (record.mode === 'focus' && isTargetTask) {
                 const recordDate = new Date(record.isoDate);
                 const recordDateKey = (recordDate.getMonth() + 1) + '/' + recordDate.getDate();
-
-                if (recordDate >= todayStart) {
-                    todayDuration += record.duration;
-                }
+                if (recordDate >= todayStart) todayDuration += record.duration;
                 if (recordDate >= weekStart) {
                     weekDuration += record.duration;
-                    // 日別内訳は個別タスク選択時のみ集計（CSVエクスポートでは全タスク合計時も出す）
-                    // if (taskNameOrAll !== ALL_TASKS_VALUE) {
-                        weekDailyTotals[recordDateKey] = (weekDailyTotals[recordDateKey] || 0) + record.duration;
-                    // }
+                    weekDailyTotals[recordDateKey] = (weekDailyTotals[recordDateKey] || 0) + record.duration;
                 }
                 if (recordDate >= monthStart) {
                     monthDuration += record.duration;
-                    // if (taskNameOrAll !== ALL_TASKS_VALUE) {
-                        monthDailyTotals[recordDateKey] = (monthDailyTotals[recordDateKey] || 0) + record.duration;
-                    // }
+                    monthDailyTotals[recordDateKey] = (monthDailyTotals[recordDateKey] || 0) + record.duration;
                 }
             }
         });
@@ -407,19 +433,15 @@
         };
     }
 
-
     function updateTaskSummary() {
         const selectedValue = taskSelector.value;
         taskWeekDetailsDisplay.innerHTML = '';
         taskMonthDetailsDisplay.innerHTML = '';
-
         const summary = calculateSummaryForTask(selectedValue, loadAllRecords());
-
         taskTodayTotalDisplay.innerHTML = '<strong>今日の合計:</strong> ' + formatTime(summary.today.total, 'japanese');
         taskWeekTotalDisplay.innerHTML = '<strong>今週の合計:</strong> ' + formatTime(summary.week.total, 'japanese');
         taskMonthTotalDisplay.innerHTML = '<strong>今月の合計:</strong> ' + formatTime(summary.month.total, 'japanese');
-
-        const now = new Date(); // ソート用
+        const now = new Date();
         if (selectedValue !== ALL_TASKS_VALUE) {
             if (Object.keys(summary.week.details).length > 0) {
                 const ulWeek = document.createElement('ul');
@@ -447,15 +469,11 @@
     function generateCsvData() {
         let csvRows = [];
         const now = new Date();
-        csvRows.push(["集計対象タスク", "期間種別", "日付", "作業時間"]); // ヘッダー
-
+        csvRows.push(["集計対象タスク", "期間種別", "日付", "作業時間"]);
         const allRecords = loadAllRecords();
-
-        // 1. 全タスク合計
         const allTasksSummary = calculateSummaryForTask(ALL_TASKS_VALUE, allRecords);
         csvRows.push(["全タスク合計", "今日の合計", "", formatTime(allTasksSummary.today.total, 'japanese')]);
         csvRows.push(["全タスク合計", "今週の合計", "", formatTime(allTasksSummary.week.total, 'japanese')]);
-        // 全タスク合計の場合も日別内訳を出す (週)
         if (Object.keys(allTasksSummary.week.details).length > 0) {
             const sortedWeekDates = Object.keys(allTasksSummary.week.details).sort((a,b) => new Date(now.getFullYear() + '/' + a) - new Date(now.getFullYear() + '/' + b) );
             sortedWeekDates.forEach(dateKey => {
@@ -463,16 +481,13 @@
             });
         }
         csvRows.push(["全タスク合計", "今月の合計", "", formatTime(allTasksSummary.month.total, 'japanese')]);
-        // 全タスク合計の場合も日別内訳を出す (月)
         if (Object.keys(allTasksSummary.month.details).length > 0) {
             const sortedMonthDates = Object.keys(allTasksSummary.month.details).sort((a,b) => new Date(now.getFullYear() + '/' + a) - new Date(now.getFullYear() + '/' + b) );
             sortedMonthDates.forEach(dateKey => {
                 csvRows.push(["全タスク合計", "今月の日別内訳", dateKey, formatTime(allTasksSummary.month.details[dateKey], 'japanese')]);
             });
         }
-        csvRows.push([]); // 区切り行
-
-        // 2. 個別タスクごと
+        csvRows.push([]);
         const uniqueTasks = [...new Set(allRecords.filter(r => r.mode === 'focus' && r.task).map(r => r.task))];
         uniqueTasks.forEach(taskName => {
             const taskSummary = calculateSummaryForTask(taskName, allRecords);
@@ -491,25 +506,21 @@
                     csvRows.push([taskName, "今月の日別内訳", dateKey, formatTime(taskSummary.month.details[dateKey], 'japanese')]);
                 });
             }
-            csvRows.push([]); // タスクごとの区切り行
+            csvRows.push([]);
         });
-
         return csvRows.map(row => row.map(field => `"${String(field === undefined || field === null ? '' : field).replace(/"/g, '""')}"`).join(",")).join("\n");
     }
 
     function downloadCsv() {
-        console.log("downloadCsv function called"); // デバッグログ
         const csvData = generateCsvData();
         if (!csvData || csvData.split("\n").length <= 1) {
             alert("ダウンロードするデータがありません。");
             return;
         }
-
         const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
         const blob = new Blob([bom, csvData], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
-
         link.setAttribute("href", url);
         const fileName = `focus_timer_all_summary_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.csv`;
         link.setAttribute("download", fileName);
@@ -518,9 +529,7 @@
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        console.log("CSV download initiated."); // デバッグログ
     }
-
 
     function startMainTimerInterval() {
         if (timerInterval) clearInterval(timerInterval);
@@ -558,19 +567,12 @@
         taskInput.value = "";
 
         updateTimerDisplay();
-        // トータル時間はlocalStorageから再計算
-        const allRecords = loadAllRecords();
-        totalFocusSeconds = 0;
-        totalBreakSeconds = 0;
-        allRecords.forEach(record => {
-            if (record.mode === 'focus') totalFocusSeconds += record.duration;
-            if (record.mode === 'break') totalBreakSeconds += record.duration;
-        });
-        updateTotalTimeDisplay();
+        updateTotalTimeDisplays(); // 修正: 新しい関数を呼び出し
         updateModeIndicatorAndBackground();
         focusLapsList.innerHTML = '';
         breakLapsList.innerHTML = '';
 
+        const allRecords = loadAllRecords();
         const todayStart = getStartOfDay(new Date());
         let todaysFocusCountForDisplay = 0;
         let todaysBreakCountForDisplay = 0;
@@ -620,17 +622,9 @@
                 saveRecord(record);
                 focusLapCounter++;
                 addLapToScreen('focus', recordedTime, currentSessionStartTime, sessionEndTimeForRecord, currentTaskDescription, focusLapCounter);
-                totalFocusSeconds += recordedTime;
+                // totalFocusSeconds += recordedTime; // updateTotalTimeDisplaysで再計算するのでここでは不要
                 populateTaskSelector();
                 updateTaskSummary();
-
-                currentMode = 'break';
-                updateButtonText('集中内容を入力して', '集中スタート！', false);
-                taskInput.value = "";
-                taskInput.disabled = false;
-                currentSeconds = 0;
-                currentSessionStartTime = new Date();
-                startMainTimerInterval();
             }
         } else { // currentMode === 'break'
             const recordedTime = stopMainTimerIntervalAndGetDuration();
@@ -642,8 +636,7 @@
             saveRecord(record);
             breakLapCounter++;
             addLapToScreen('break', recordedTime, currentSessionStartTime, sessionEndTimeForRecord, null, breakLapCounter);
-            totalBreakSeconds += recordedTime;
-
+            // totalBreakSeconds += recordedTime; // updateTotalTimeDisplaysで再計算するのでここでは不要
             currentMode = 'focus';
             currentTaskDescription = taskInput.value.trim();
             taskInput.disabled = true;
@@ -652,7 +645,7 @@
             currentSessionStartTime = new Date();
             startMainTimerInterval();
         }
-        updateTotalTimeDisplay();
+        updateTotalTimeDisplays(); // 修正: 新しい関数を呼び出し
         updateModeIndicatorAndBackground();
     });
 
@@ -661,17 +654,15 @@
         isTimerActive = false;
         timerInterval = null;
         currentSeconds = 0;
+        // currentTaskDescription は initializeState でクリア
         initializeState();
     });
 
     clearAllDataButton.addEventListener('click', clearAllStoredData);
     taskSelector.addEventListener('change', updateTaskSummary);
-    downloadCsvButton.addEventListener('click', function() { // 通常の関数に変更
-        console.log("Download CSV button clicked!");
-        downloadCsv();
-    });
 
     initializeState();
 </script>
+
 </body>
 </html>
