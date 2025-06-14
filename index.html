@@ -35,11 +35,11 @@
     #modeIndicator { font-size: 1.8rem; font-weight: bold; margin-bottom: 15px; color: #444; }
     #timerDisplay { font-size: 4rem; font-weight: bold; margin-bottom: 20px; color: #2c3e50; background-color: #ecf0f1; padding: 15px; border-radius: 5px; }
     #taskInput { width: calc(100% - 22px); padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; font-size: 1rem; min-height: 60px; resize: vertical; }
-    #controlButton, #resetButton, #clearAllDataButton { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease; width: 100%; margin-bottom: 10px; line-height: 1.4; }
-    #controlButton:last-child, #resetButton:last-child, #clearAllDataButton:last-child { margin-bottom: 0; }
+    #controlButton, #resetButton, #clearAllDataButton, #downloadCsvButton { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease; width: 100%; margin-bottom: 10px; line-height: 1.4; }
+    #controlButton:last-child, #resetButton:last-child, #clearAllDataButton:last-child, #downloadCsvButton:last-child { margin-bottom: 0; }
     .button-label-small { font-size: 0.8em; display: block; }
     .button-label-large { font-size: 1.5em; font-weight: bold; display: block; }
-    #resetButton, #clearAllDataButton { font-size: 1.2rem; }
+    #resetButton, #clearAllDataButton, #downloadCsvButton { font-size: 1.2rem; }
     #controlButton.focus { background-color: #3498db; color: white; }
     #controlButton.focus:hover { background-color: #2980b9; }
     #controlButton.break { background-color: #2ecc71; color: white; }
@@ -48,6 +48,9 @@
     #resetButton:hover { background-color: #c0392b; }
     #clearAllDataButton { background-color: #95a5a6; color: white; margin-top: 10px; }
     #clearAllDataButton:hover { background-color: #7f8c8d; }
+    #downloadCsvButton { background-color: #16a085; color: white; margin-top: 15px; }
+    #downloadCsvButton:hover { background-color: #117a65; }
+
 
     .laps-section { margin-top: 20px; text-align: left; width: 100%; }
     .laps-section h3 { margin-bottom: 5px; color: #7f8c8d; border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; }
@@ -79,22 +82,9 @@
         .timer-container, .task-summary-container, .usage-guide, .data-management-container { margin-bottom: 20px; padding: 15px; }
         #modeIndicator { font-size: 1.5rem; }
         #timerDisplay { font-size: 3rem; }
-
-        #controlButton {
-            padding: 18px 15px; /* 上下パディングを増やして高さを出す */
-        }
-        #resetButton, #clearAllDataButton {
-            font-size: 1.2rem; /* 他のボタンも少し大きく */
-            padding: 15px;     /* 他のボタンのパディングも調整 */
-        }
-        .button-label-small {
-            font-size: 0.9em; /* スマホ用に調整 (基準フォントサイズに対する割合) */
-            margin-bottom: 3px; /* 少し間隔をあける */
-        }
-        .button-label-large {
-            font-size: 1.6em; /* スマホ用に調整 (基準フォントサイズに対する割合) */
-        }
-
+        #controlButton { padding: 8px 15px; }
+        #resetButton, #clearAllDataButton, #downloadCsvButton { font-size: 1.1rem; }
+        .button-label-large { font-size: 1.2em; }
         .columns { flex-direction: column; }
         #taskInput { min-height: 40px; }
         .total-time { font-size: 0.9rem; }
@@ -149,6 +139,7 @@
     <div id="taskWeekDetails" class="task-period-details"></div>
     <div id="taskMonthTotal" class="task-period-total"><strong>今月の合計:</strong> 00時間00分00秒</div>
     <div id="taskMonthDetails" class="task-period-details"></div>
+    <button id="downloadCsvButton">表示中の集計をCSVでダウンロード</button>
 </div>
 
 <div class="usage-guide">
@@ -178,8 +169,6 @@
 </div>
 
 <script>
-    // (JavaScriptコードは前回のメッセージのものと同じです。変更はありません。)
-    // ... (前回のメッセージで提示したJavaScriptコード全体をここに貼り付けてください) ...
     const bodyElement = document.body;
     const modeIndicator = document.getElementById('modeIndicator');
     const timerDisplay = document.getElementById('timerDisplay');
@@ -198,6 +187,7 @@
     const taskMonthTotalDisplay = document.getElementById('taskMonthTotal');
     const taskMonthDetailsDisplay = document.getElementById('taskMonthDetails');
     const clearAllDataButton = document.getElementById('clearAllDataButton');
+    const downloadCsvButton = document.getElementById('downloadCsvButton'); // CSVダウンロードボタン
 
     const STORAGE_KEY = 'focusTimerRecords';
     const ALL_TASKS_VALUE = "all_tasks_summary";
@@ -214,6 +204,7 @@
 
     let currentSessionStartTime = null;
     let currentTaskDescription = "";
+    let currentSummaryData = {}; // CSVエクスポート用に集計データを保持
 
     function saveRecord(record) {
         const records = loadAllRecords();
@@ -385,8 +376,8 @@
         let todayDuration = 0;
         let weekDuration = 0;
         let monthDuration = 0;
-        const weekDailyTotals = {};
-        const monthDailyTotals = {};
+        const weekDailyTotals = {}; // { "M/D": seconds }
+        const monthDailyTotals = {};// { "M/D": seconds }
 
         records.forEach(record => {
             const isTargetTask = (selectedValue === ALL_TASKS_VALUE || record.task === selectedValue);
@@ -416,6 +407,14 @@
         taskWeekTotalDisplay.innerHTML = '<strong>今週の合計:</strong> ' + formatTime(weekDuration, 'japanese');
         taskMonthTotalDisplay.innerHTML = '<strong>今月の合計:</strong> ' + formatTime(monthDuration, 'japanese');
 
+        // CSVエクスポート用にデータを保持
+        currentSummaryData = {
+            selectedValue,
+            today: { total: todayDuration },
+            week: { total: weekDuration, details: weekDailyTotals },
+            month: { total: monthDuration, details: monthDailyTotals }
+        };
+
         if (selectedValue !== ALL_TASKS_VALUE) {
             if (Object.keys(weekDailyTotals).length > 0) {
                 const ulWeek = document.createElement('ul');
@@ -439,6 +438,62 @@
             }
         }
     }
+
+    function generateCsvData() {
+        const { selectedValue, today, week, month } = currentSummaryData;
+        const selectedTaskName = (selectedValue === ALL_TASKS_VALUE) ? "全タスク合計" : selectedValue;
+        let csvRows = [];
+        const now = new Date();
+
+        // ヘッダー
+        csvRows.push(["集計対象", "期間種別", "日付", "作業時間"]);
+
+        // 今日の合計
+        csvRows.push([selectedTaskName, "今日の合計", "", formatTime(today.total, 'japanese')]);
+
+        // 今週の合計と内訳
+        csvRows.push([selectedTaskName, "今週の合計", "", formatTime(week.total, 'japanese')]);
+        if (selectedValue !== ALL_TASKS_VALUE && Object.keys(week.details).length > 0) {
+            const sortedWeekDates = Object.keys(week.details).sort((a,b) => new Date(now.getFullYear() + '/' + a) - new Date(now.getFullYear() + '/' + b) );
+            sortedWeekDates.forEach(dateKey => {
+                csvRows.push([selectedTaskName, "今週の内訳", dateKey, formatTime(week.details[dateKey], 'japanese')]);
+            });
+        }
+
+        // 今月の合計と内訳
+        csvRows.push([selectedTaskName, "今月の合計", "", formatTime(month.total, 'japanese')]);
+        if (selectedValue !== ALL_TASKS_VALUE && Object.keys(month.details).length > 0) {
+            const sortedMonthDates = Object.keys(month.details).sort((a,b) => new Date(now.getFullYear() + '/' + a) - new Date(now.getFullYear() + '/' + b) );
+            sortedMonthDates.forEach(dateKey => {
+                csvRows.push([selectedTaskName, "今月の内訳", dateKey, formatTime(month.details[dateKey], 'japanese')]);
+            });
+        }
+        return csvRows.map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(",")).join("\n");
+    }
+
+    function downloadCsv() {
+        const csvData = generateCsvData();
+        if (!csvData || csvData.split("\n").length <= 1) { // ヘッダー行のみの場合はデータなしとみなす
+            alert("ダウンロードするデータがありません。");
+            return;
+        }
+
+        const bom = new Uint8Array([0xEF, 0xBB, 0xBF]); // UTF-8 BOM
+        const blob = new Blob([bom, csvData], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute("href", url);
+        const selectedTaskFilePart = (taskSelector.value === ALL_TASKS_VALUE) ? "all_tasks" : taskSelector.value.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const fileName = `focus_timer_summary_${selectedTaskFilePart}_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.csv`;
+        link.setAttribute("download", fileName);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
 
     function startMainTimerInterval() {
         if (timerInterval) clearInterval(timerInterval);
@@ -476,12 +531,22 @@
         taskInput.value = "";
 
         updateTimerDisplay();
-        updateTotalTimeDisplay();
+        // updateTotalTimeDisplay(); // InitializeStateでは累計時間はlocalStorageから再計算しない
         updateModeIndicatorAndBackground();
         focusLapsList.innerHTML = '';
         breakLapsList.innerHTML = '';
 
+        // トータル時間も初期化時にローカルストレージから再計算
         const allRecords = loadAllRecords();
+        totalFocusSeconds = 0;
+        totalBreakSeconds = 0;
+        allRecords.forEach(record => {
+            if (record.mode === 'focus') totalFocusSeconds += record.duration;
+            if (record.mode === 'break') totalBreakSeconds += record.duration;
+        });
+        updateTotalTimeDisplay();
+
+
         const todayStart = getStartOfDay(new Date());
         let todaysFocusCountForDisplay = 0;
         let todaysBreakCountForDisplay = 0;
@@ -572,8 +637,8 @@
         isTimerActive = false;
         timerInterval = null;
         currentSeconds = 0;
-        currentTaskDescription = taskInput.value;
-        initializeState();
+        // currentTaskDescription = taskInput.value; // initializeStateでクリアされるので不要
+        initializeState(); // 表示と状態を完全に初期化（ローカルストレージは残る）
     });
 
     clearAllDataButton.addEventListener('click', clearAllStoredData);
@@ -581,6 +646,5 @@
 
     initializeState();
 </script>
-
 </body>
 </html>
